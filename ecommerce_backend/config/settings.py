@@ -37,7 +37,7 @@ ALLOWED_HOSTS = config(
 # Application definition
 
 INSTALLED_APPS = [
-    "authentication",
+    "apps.authentication",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -159,7 +159,10 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # For developm
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "accounts.authentication.CustomJWTAuthentication",
+        "apps.authentication.authentication.CustomJWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
     ),
 }
 

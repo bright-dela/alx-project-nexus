@@ -9,8 +9,8 @@ from .serializers import (
     OTPVerificationSerializer,
     UserSerializer,
 )
-from .services import PasswordlessAuthService
-from utility.utils import get_client_ip, get_user_agent
+from .services.auth_services import PasswordlessAuthService
+from .utility.utils import get_client_ip, get_user_agent
 
 
 class RegisterView(APIView):

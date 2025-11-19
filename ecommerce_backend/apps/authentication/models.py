@@ -33,5 +33,5 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name}"
 
     class Meta:
-        db_tablle = "users"
+        db_table = "users"
         ordering = ["-date_joined"]
