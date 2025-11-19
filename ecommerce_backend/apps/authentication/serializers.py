@@ -5,12 +5,12 @@ from .models import User
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """
     Serializer for passwordless user registration.
-    Only requires email, firstname and lastname - no password needed.
+    Only requires email, first_name and last_name - no password needed.
     """
 
     class Meta:
         model = User
-        fields = ("email", "firstname", "lastname")
+        fields = ("email", "first_name", "last_name")
 
     def validate_email(self, value):
         """Ensure email is lowercase and properly formatted"""
@@ -66,8 +66,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "email",
-            "firstname",
-            "lastname",
+            "first_name",
+            "last_name",
             "is_email_verified",
             "date_joined",
         )
