@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from datetime import datetime
+from django.utils import timezone
 import uuid
 
 
@@ -10,123 +10,120 @@ from .managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    id = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4)
-    email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=255, blank=True)
-    last_name = models.CharField(max_length=255, blank=True)
-    phone_number = models.CharField(unique=True, max_length=20, blank=True)
-    gender = models.CharField(max_length=10, blank=True)
-    birth_date = models.DateField(null=True, blank=True)
-    is_active = models.BooleanField(default=False)
+    """Custom user model with email as the primary identifier"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True, db_index=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(auto_now=True)
-
+    date_joined = models.DateTimeField(default=timezone.now)
+    last_login = models.DateTimeField(null=True, blank=True)
+    
     objects = UserManager()
-
-    USERNAME_FIELD = email
+    
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-
+    
     class Meta:
-        db_table = "user"
-        verbose_name = "User"
-        verbose_name_plural = "Users"
-
-        indexes = [
-            models.Index(fields=["email"]),
-        ]
-
+        db_table = 'users'
+        verbose_name = 'user'
+        verbose_name_plural = 'users'
+    
     def __str__(self):
-        if self.email:
-            return self.email
+        return self.email
+    
+    def get_full_name(self):
+        return f'{self.first_name} {self.last_name}'.strip() or self.email
 
 
 class MagicLinkToken(models.Model):
-    id = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4)
-    user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name="MagicLinkToken"
-    )
-    token = models.CharField(unique=True)
-    ip_address = models.IPAddressField(null=True, blank=True)
-    user_agent = models.TextField(blank=True)
+    """Token for passwordless magic link authentication"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='magic_tokens')
+    token = models.CharField(max_length=255, unique=True, db_index=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    
     class Meta:
-        db_table = "magic_link_token"
-        verbose_name = "Magic Link Token"
-        verbose_name_plural = "Magic Link Tokens"
-
-    def is_valid(self):
-        """Check if the token is valid (not used and not expired)"""
-        current_time = datetime.now()
-        return not self.is_used and current_time < self.expires_at
-
-    def mark_as_used(self):
-        """Mark the token as used"""
-        self.is_used = True
-        self.save()
-
+        db_table = 'magic_link_tokens'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token', 'is_used']),
+            models.Index(fields=['expires_at']),
+        ]
+    
     def __str__(self):
-        return f"MagicLinkToken token[{self.token}] for {self.user.email}"
+        return f'Magic link for {self.user.email}'
+    
+    def is_valid(self):
+        """Check if token is still valid and unused"""
+        return not self.is_used and self.expires_at > timezone.now()
 
 
 class JWTTokenRegistry(models.Model):
-    id = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4)
-    user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name="JWTTokenRegistry"
-    )
-    # JWT ID for identifying and tracking the token
-    token_jti = models.CharField(unique=True, max_length=32)
-    # Token type: access or refresh
-    token_type = models.CharField(max_length=10)
+    """Registry for tracking active JWT tokens"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jwt_tokens')
+    token_jti = models.CharField(max_length=255, unique=True, db_index=True)
+    token_type = models.CharField(max_length=10, choices=[('access', 'Access'), ('refresh', 'Refresh')])
     issued_at = models.DateTimeField()
     expires_at = models.DateTimeField()
-    device_info = models.TextField(blank=True)
-    ip_address = models.IPAddressField(null=True, blank=True)
+    device_fingerprint = models.CharField(max_length=255, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
     is_blacklisted = models.BooleanField(default=False)
     blacklisted_at = models.DateTimeField(null=True, blank=True)
-
+    
     class Meta:
+        db_table = 'jwt_token_registry'
+        ordering = ['-issued_at']
         indexes = [
-            models.Index(fields=["token_jti"]),
-            models.Index(fields=["user"]),
+            models.Index(fields=['token_jti', 'is_blacklisted']),
+            models.Index(fields=['user', 'token_type']),
+            models.Index(fields=['expires_at']),
         ]
-
+    
     def __str__(self):
-        return f"JWTTokenRegistry token_jti[{self.token_jti}] for {self.user.email}"
+        return f'{self.token_type} token for {self.user.email}'
 
 
 class AuthenticationAuditLog(models.Model):
-    id = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4)
-    user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name="AuthenticationAuditLog"
-    )
-    action = models.CharField(max_length=255)
-    sucess = models.BooleanField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    ip_address = models.IPAddressField(null=True, blank=True)
+    """Comprehensive audit log for authentication events"""
+    
+    ACTION_CHOICES = [
+        ('magic_link_requested', 'Magic Link Requested'),
+        ('magic_link_validated', 'Magic Link Validated'),
+        ('token_refreshed', 'Token Refreshed'),
+        ('logout', 'Logout'),
+        ('failed_validation', 'Failed Validation'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='audit_logs')
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    success = models.BooleanField(default=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
-    token_jti = models.CharField(max_length=32, blank=True)
+    token_jti = models.CharField(max_length=255, blank=True)
     error_code = models.CharField(max_length=50, blank=True)
-    metadata = models.JSONField(blank=True, null=True)
-
+    metadata = models.JSONField(default=dict, blank=True)
+    
     class Meta:
-        db_table = "authentication_audit_log"
-        verbose_name = "Authentication Audit Log"
-        verbose_name_plural = "Authentication Audit Logs"
-
+        db_table = 'authentication_audit_logs'
+        ordering = ['-timestamp']
         indexes = [
-            models.Index(fields=["user"]),
-            models.Index(fields=["timestamp"]),
+            models.Index(fields=['user', 'action']),
+            models.Index(fields=['timestamp']),
+            models.Index(fields=['success']),
         ]
-
+    
     def __str__(self):
-        return (f"AuditLog action...({"SUCESS" if self.sucess else 'FAILED'})...{self.action} for {self.user.email}  at {self.timestamp}")
+        user_email = self.user.email if self.user else 'Unknown'
+        return f'{self.action} by {user_email} at {self.timestamp}'
