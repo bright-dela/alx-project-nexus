@@ -8,7 +8,6 @@ from .utility.passwordless_utils import PASSWORDLESS_CONFIG
 logger = logging.getLogger(__name__)
 
 
-
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_otp_email(self, email, otp_code, first_name=None):
     """
@@ -44,7 +43,6 @@ Your Nexus Team
     except Exception as e:
         logger.error(f"Failed to send OTP email to {email}: {str(e)}")
         raise self.retry(exc=e)
-
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
@@ -85,8 +83,6 @@ Your Nexus Team
     except Exception as e:
         logger.error(f"Failed to send magic link email to {email}: {str(e)}")
         raise self.retry(exc=e)
-
-
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)

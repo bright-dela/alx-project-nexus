@@ -34,9 +34,7 @@ class RegisterView(APIView):
         user = PasswordlessAuthService.register_user(serializer.validated_data)
 
         # Generate tokens for immediate login
-        tokens = create_tokens_with_claims(
-            user, ip_address, user_agent
-        )
+        tokens = create_tokens_with_claims(user, ip_address, user_agent)
 
         user_data = PasswordlessAuthService.get_user_data(user)
 
@@ -297,4 +295,3 @@ class ResendVerificationView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-

@@ -35,7 +35,6 @@ def store_otp_code(email, otp_code):
     return True
 
 
-
 def verify_otp_code(email, submitted_code):
     """
     Verify if the submitted OTP code matches the stored one.
@@ -72,8 +71,9 @@ def verify_otp_code(email, submitted_code):
     logger.warning(f"OTP verification failed for {email}: Invalid code")
 
     return (
-        False, f"Invalid OTP code. {MAX_OTP_ATTEMPTS - cached_data['attempts']} attempts remaining",)
-
+        False,
+        f"Invalid OTP code. {MAX_OTP_ATTEMPTS - cached_data['attempts']} attempts remaining",
+    )
 
 
 def store_magic_token(email, magic_token):
@@ -87,10 +87,11 @@ def store_magic_token(email, magic_token):
     # Store with expiry time in seconds
     cache.set(cache_key, cache_data, MAGIC_LINK_EXPIRY_MINUTES * 60)
 
-    logger.info(f"Magic token stored for {email}, expires in {MAGIC_LINK_EXPIRY_MINUTES} minutes")
+    logger.info(
+        f"Magic token stored for {email}, expires in {MAGIC_LINK_EXPIRY_MINUTES} minutes"
+    )
 
     return True
-
 
 
 def verify_magic_token(magic_token):
@@ -116,8 +117,6 @@ def verify_magic_token(magic_token):
     return (email, "Magic link verified successfully")
 
 
-
-
 def check_passwordless_rate_limit(email):
     """
     Check if user has exceeded rate limit for passwordless login requests.
@@ -137,5 +136,5 @@ def cleanup_expired_otp(email):
     """
     cache_key = f"otp:{email}"
     cache.delete(cache_key)
-    
+
     logger.info(f"OTP cleaned up for {email}")
