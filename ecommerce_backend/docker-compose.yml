@@ -54,9 +54,12 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
     depends_on:
       - db
 
 volumes:
   postgres_data:
   redis_data:
+  pgadmin-data:
