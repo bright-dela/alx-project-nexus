@@ -1,10 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+
 from .manager import UserManage
 
 import uuid
-
-# Create your models here.
 
 
 class User(AbstractBaseUser, PermissionsMixin):
