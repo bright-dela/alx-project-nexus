@@ -7,7 +7,7 @@ class UserManage(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("Email address is required")
-        
+
         normalized_email = self.normalize_email(email)
 
         user = self.model(normalized_email, **extra_fields)
@@ -19,10 +19,9 @@ class UserManage(BaseUserManager):
         # For passwordless users, set unusable password
         user.set_unusable_password()
 
-        user.save(self._db)
+        user.save(using=self._db)
 
         return user
-    
 
 
 
