@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
+from django.conf import settings
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from ..utility.utils import (
@@ -20,9 +21,14 @@ from ..utility.passwordless_utils import (
 
 from ..tasks import send_otp_email, send_magic_link_email, send_welcome_email
 from ..utility.token_utils import create_tokens_with_claims, decode_token_claims
+
 import logging
+from datetime import datetime
+
+
 
 User = get_user_model()
+
 logger = logging.getLogger(__name__)
 
 
@@ -65,73 +71,60 @@ class PasswordlessAuthService:
 
     @staticmethod
     def initiate_passwordless_login(email, method, ip_address, request):
-        """
+        '''
         Start the passwordless login process by sending OTP or magic link.
-        Returns success status and message.
-        """
+        '''
         email = email.lower().strip()
-
-        # Check rate limiting to prevent abuse
+        
+        # Check rate limiting
         if check_passwordless_rate_limit(email):
             raise ValidationError(
-                {"detail": "Too many login attempts. Please try again later."}
+                {'detail': 'Too many login attempts. Please try again later.'}
             )
-
+        
         # Get user
         try:
             user = User.objects.get(email=email)
-
         except User.DoesNotExist:
-            raise ValidationError({"email": "No account found with this email"})
-
-        if method == "otp":
+            raise ValidationError({'email': 'No account found with this email'})
+        
+        if method == 'otp':
             # Generate and store OTP code
             otp_code = generate_otp_code()
             store_otp_code(email, otp_code)
-
-            # Send OTP via email
-            success = send_otp_email.delay(email, otp_code, user.first_name)
-
-            if not success:
-                raise ValidationError(
-                    {"detail": "Failed to send verification code. Please try again."}
-                )
-
-            logger.info(f"OTP sent to {email}")
-
+            
+            # Send OTP via email asynchronously
+            send_otp_email.delay(email, otp_code, user.first_name)
+            
+            logger.info(f'OTP sent to {email}')
+            
             return {
-                "success": True,
-                "message": "Verification code sent to your email",
-                "method": "otp",
+                'success': True,
+                'message': 'Verification code sent to your email',
+                'method': 'otp',
             }
-
-        elif method == "magic_link":
+        
+        elif method == 'magic_link':
             # Generate and store magic token
             magic_token = generate_magic_token()
             store_magic_token(email, magic_token)
-
+            
             # Build magic link URL
-            # You should replace this with your actual frontend URL
-
-            base_url = request.build_absolute_uri("/")[:-1]
-            magic_link = f"{base_url}/api/auth/verify-magic-link/{magic_token}/"
-
-            # Send magic link via email
-            success = send_magic_link_email.delay(email, magic_link, user.first_name)
-
-            if not success:
-                raise ValidationError(
-                    {"detail": "Failed to send login link. Please try again."}
-                )
-
-            logger.info(f"Magic link sent to {email}")
+            base_url = request.build_absolute_uri('/')[:-1]
+            magic_link = f'{base_url}/api/auth/verify-magic-link/{magic_token}/'
+            
+            # Send magic link via email asynchronously
+            send_magic_link_email.delay(email, magic_link, user.first_name)
+            
+            logger.info(f'Magic link sent to {email}')
+            
             return {
-                "success": True,
-                "message": "Login link sent to your email",
-                "method": "magic_link",
+                'success': True,
+                'message': 'Login link sent to your email',
+                'method': 'magic_link',
             }
-
-        raise ValidationError({"method": "Invalid authentication method"})
+        
+        raise ValidationError({'method': 'Invalid authentication method'})
 
     @staticmethod
     def verify_otp_and_login(email, otp_code, ip_address, user_agent):
@@ -203,29 +196,43 @@ class PasswordlessAuthService:
 
         return {"user": user, "tokens": tokens, "message": "Login successful"}
 
+
+
     @staticmethod
     def logout_user(refresh_token_string):
-        """
+        '''
         Logout user by blacklisting their refresh token.
-        """
+        '''
         try:
-            # Decode token to get JTI and user_id
             token = RefreshToken(refresh_token_string)
             jti = str(token["jti"])
             user_id = token["user_id"]
+            
+            # Get token expiry time
+            exp_timestamp = token.get('exp')
 
-            # Blacklist this specific token
-            cache_blacklist_jti(jti, user_id)
+            if exp_timestamp:
+                
+                ttl = max(int(exp_timestamp - datetime.now(timezone.utc).timestamp()), 0)
 
-            # Also use simplejwt's built-in blacklist
+            else:
+                # Fallback to refresh token lifetime from settings
+                refresh_lifetime = settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME')
+
+                ttl = int(refresh_lifetime.total_seconds()) 
+            
+            # Blacklist this token with proper TTL
+            cache_blacklist_jti(jti, user_id, ttl)
+            
             token.blacklist()
-
+            
             logger.info(f"User logged out successfully: user_id={user_id}")
 
             return True
         
         except Exception as e:
             raise ValidationError({"detail": f"Invalid token: {str(e)}"})
+    
 
     @staticmethod
     def revoke_all_tokens(user, current_access_token=None):

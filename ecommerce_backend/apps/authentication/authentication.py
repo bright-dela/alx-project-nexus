@@ -19,42 +19,40 @@ class CustomJWTAuthentication(JWTAuthentication):
     """
 
     def authenticate(self, request):
-        # Call authentication to get user and token
         result = super().authenticate(request)
-
+        
         if result is None:
             return None
-
+        
         user, token = result
-
-        # Extract claims from token
-        jti = str(token.get("jti"))
-        user_id = token.get("user_id")
-        token_ip = token.get("ip")
-        token_device = token.get("device")
-
-        # Check if this specific token has been blacklisted
+        
+        # Extract claims
+        jti = str(token.get('jti'))
+        user_id = token.get('user_id')
+        token_device = token.get('device')
+        
+        # Check blacklists
         if is_jti_blacklisted(jti):
-            raise AuthenticationFailed("This session has been terminated")
-
-        # Check if all user's tokens have been blacklisted
+            raise AuthenticationFailed('This session has been terminated')
+        
         if is_user_token_blacklisted(user_id, jti):
-            raise AuthenticationFailed("All sessions have been terminated")
-
-        # Get current request information
+            raise AuthenticationFailed('All sessions have been terminated')
+        
+        # Get current device
         current_ip = get_client_ip(request)
         current_user_agent = get_user_agent(request)
         current_device = generate_device_fingerprint(current_ip, current_user_agent)
-
-        # Check for device fingerprint mismatch (logging only, not blocking)
+        
+        # OPTIONAL: Enforce device matching (strict mode)
+        # if token_device != current_device:
+        #     logger.warning(f'Device mismatch blocked for {user.email}')
+        #     raise AuthenticationFailed('Token not valid for this device')
+        
+        # We just log, don't block
         if token_device != current_device:
             logger.warning(
-                f"Device fingerprint mismatch for user {user.email}: "
-                f"token_device={token_device}, current_device={current_device}"
+                f'Device fingerprint mismatch for user {user.email}: '
+                f'token_device={token_device}, current_device={current_device}'
             )
-            # Note: We log this but don't block the request
-
-        if token_ip != current_ip:
-            logger.warning(f"IP address mismatch for user {user.email}")
-
+        
         return user, token

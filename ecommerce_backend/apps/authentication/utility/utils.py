@@ -49,16 +49,21 @@ def generate_magic_token():
     return secrets.token_urlsafe(32)
 
 
-def cache_blacklist_jti(jti, user_id, ttl):
-    """
+
+def cache_blacklist_jti(jti, user_id, ttl=None):
+    '''
     Store a blacklisted token JTI in cache.
     This prevents the token from being used even though it hasn't expired.
-    """
-
+    '''
     cache_key = f"blacklist:jti:{jti}"
     cache_data = {"user_id": user_id, "blacklisted_at": datetime.now().isoformat()}
-
-    ttl = getattr(settings, "REFRESH_TOKEN_LIFETIME" * (24 * 3600), 604800)
+    
+    # If TTL not provided, use refresh token lifetime from settings
+    if ttl is None:
+        # Get the timedelta object and convert to seconds
+        refresh_lifetime = settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME')
+        ttl = int(refresh_lifetime.total_seconds())
+    
     cache.set(cache_key, cache_data, ttl)
     return True
 

@@ -64,7 +64,7 @@ class PasswordlessLoginInitiateView(APIView):
     Body: {"email": "user@example.com", "method": "otp" or "magic_link"}
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         ip_address = get_client_ip(request)
@@ -92,7 +92,7 @@ class OTPVerificationView(APIView):
     Body: {"email": "user@example.com", "otp_code": "123456"}
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         ip_address = get_client_ip(request)
@@ -132,7 +132,7 @@ class MagicLinkVerificationView(APIView):
     This endpoint is typically accessed via email link click.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, token):
         ip_address = get_client_ip(request)
