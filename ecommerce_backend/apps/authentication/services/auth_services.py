@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,7 +18,7 @@ from ..utility.passwordless_utils import (
     check_passwordless_rate_limit,
 )
 
-from .email_services import send_otp_email, send_magic_link_email, send_welcome_email
+from ..tasks import send_otp_email, send_magic_link_email, send_welcome_email
 from ..utility.token_utils import create_tokens_with_claims, decode_token_claims
 import logging
 
@@ -37,28 +38,30 @@ class PasswordlessAuthService:
         Register a new user without requiring a password.
         User can log in later using passwordless methods.
         """
-        email = validated_data.get("email").lower().strip()
-        first_name = validated_data.get("first_name").lower().strip()
-        last_name = validated_data.get("last_name").lower().strip()
 
-        # Check if user already exists
-        if User.objects.filter(email=email).exists():
-            raise ValidationError({"email": "User with this email already exists"})
+        with transaction.atomic():
+            email = validated_data.get("email").lower().strip()
+            first_name = validated_data.get("first_name").strip().title()
+            last_name = validated_data.get("last_name").strip().title()
 
-        # Create user without password
-        user = User.objects.create(
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            is_email_verified=False,
-        )
+            # Check if user already exists
+            if User.objects.filter(email=email).exists():
+                raise ValidationError({"email": "User with this email already exists"})
 
-        logger.info(f"New user registered: {email}")
+            # Create user without password
+            user = User.objects.create(
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                is_email_verified=False,
+            )
 
-        # Send welcome email
-        send_welcome_email(email, user.first_name)
+            logger.info(f"New user registered: {email}")
 
-        return user
+            # Send welcome email asynchronously
+            send_welcome_email.delay(email, user.first_name)
+
+            return user
 
     @staticmethod
     def initiate_passwordless_login(email, method, ip_address, request):
@@ -87,7 +90,7 @@ class PasswordlessAuthService:
             store_otp_code(email, otp_code)
 
             # Send OTP via email
-            success = send_otp_email(email, otp_code, user.first_name)
+            success = send_otp_email.delay(email, otp_code, user.first_name)
 
             if not success:
                 raise ValidationError(
@@ -114,7 +117,7 @@ class PasswordlessAuthService:
             magic_link = f"{base_url}/api/auth/verify-magic-link/{magic_token}/"
 
             # Send magic link via email
-            success = send_magic_link_email(email, magic_link, user.first_name)
+            success = send_magic_link_email.delay(email, magic_link, user.first_name)
 
             if not success:
                 raise ValidationError(
@@ -252,7 +255,7 @@ class PasswordlessAuthService:
         return {
             "id": user.id,
             "email": user.email,
-            "first_name": user.username,
+            "first_name": user.first_name,
             "last_name": user.last_name,
             "is_email_verified": user.is_email_verified,
             "date_joined": user.date_joined.isoformat(),

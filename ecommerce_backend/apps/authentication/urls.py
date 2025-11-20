@@ -17,7 +17,7 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     
     # Passwordless Login
-    path('passwordless-login/', PasswordlessLoginInitiateView.as_view(), name='passwordless_login'),
+    path('login/', PasswordlessLoginInitiateView.as_view(), name='login'),
     path('verify-otp/', OTPVerificationView.as_view(), name='verify_otp'),
     path('verify-magic-link/<str:token>/', MagicLinkVerificationView.as_view(), name='verify_magic_link'),
     path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),

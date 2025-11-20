@@ -11,6 +11,7 @@ from .serializers import (
 )
 from .services.auth_services import PasswordlessAuthService
 from .utility.utils import get_client_ip, get_user_agent
+from .utility.token_utils import create_tokens_with_claims
 
 
 class RegisterView(APIView):
@@ -33,9 +34,10 @@ class RegisterView(APIView):
         user = PasswordlessAuthService.register_user(serializer.validated_data)
 
         # Generate tokens for immediate login
-        tokens = PasswordlessAuthService.get_tokens_for_user(
+        tokens = create_tokens_with_claims(
             user, ip_address, user_agent
         )
+
         user_data = PasswordlessAuthService.get_user_data(user)
 
         return Response(
@@ -58,11 +60,11 @@ class RegisterView(APIView):
 class PasswordlessLoginInitiateView(APIView):
     """
     Initiate passwordless login by sending OTP or magic link.
-    POST /api/auth/passwordless-login/
+    POST /api/auth/login/
     Body: {"email": "user@example.com", "method": "otp" or "magic_link"}
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         ip_address = get_client_ip(request)
@@ -90,7 +92,7 @@ class OTPVerificationView(APIView):
     Body: {"email": "user@example.com", "otp_code": "123456"}
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         ip_address = get_client_ip(request)
@@ -130,7 +132,7 @@ class MagicLinkVerificationView(APIView):
     This endpoint is typically accessed via email link click.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, token):
         ip_address = get_client_ip(request)
@@ -198,8 +200,17 @@ class UserProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        # Re-issue tokens with updated user info
+        ip_address = get_client_ip(request)
+        user_agent = get_user_agent(request)
+        tokens = create_tokens_with_claims(user, ip_address, user_agent)
+
         return Response(
-            {"user": serializer.data, "message": "Profile updated successfully"},
+            {
+                "user": serializer.data,
+                "tokens": {"refresh": tokens["refresh"], "access": tokens["access"]},
+                "message": "Profile updated successfully",
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -276,7 +287,7 @@ class ResendVerificationView(APIView):
             email=serializer.validated_data["email"],
             method=serializer.validated_data["method"],
             ip_address=ip_address,
-            user_agent=user_agent,
+            request=request,
         )
 
         return Response(
