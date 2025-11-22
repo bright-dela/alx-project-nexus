@@ -26,17 +26,16 @@ from drf_yasg import openapi
 
 
 schema_view = get_schema_view(
-    openapi.info(
+    openapi.Info(
         title="Project Nexus E-commerce API Documentation",
         default_version="v1",
         description="API documentation for the e-commerce backend project.",
-        contact="brightdelasettor@gmail.com",
+        contact=openapi.Contact(email="brightdelasettor@gmail.com"),
         license=openapi.License(name="MIT License"),
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
 )
-
 
 
 urlpatterns = [

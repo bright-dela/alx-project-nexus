@@ -1,7 +1,10 @@
 import uuid
 from django.db import models
 from django.utils.text import slugify
+from django.core.validators import FileExtensionValidator
 from treebeard.mp_tree import MP_Node
+
+
 from django.conf import settings
 
 # Create your models here
@@ -183,7 +186,7 @@ class ProductImage(models.Model):
         related_name="images"
     )
 
-    image = models.ImageField(upload_to="products/%Y/%m/")
+    image = models.ImageField(upload_to="products/%Y/%m/", validators=[FileExtensionValidator(allowed_extensions=["jpg","jpeg","png","webp"])])
     alt_text = models.CharField(max_length=200, blank=True)
     is_primary = models.BooleanField(default=False)
     display_order = models.PositiveIntegerField(default=0)

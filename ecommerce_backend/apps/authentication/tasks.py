@@ -42,7 +42,7 @@ Your Nexus Team
 
     except Exception as e:
         logger.error(f"Failed to send OTP email to {email}: {str(e)}")
-        raise self.retry(exc=e)
+        raise self.retry(exc=e, countdown=2 ** self.request.retries * 60)
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)

@@ -18,7 +18,8 @@ class UserManager(BaseUserManager):
             # Help create superusers with password
             user.set_password(password)
 
-        user.set_unusable_password()
+        else:
+            user.set_unusable_password()
 
         user.save(using=self._db)
 

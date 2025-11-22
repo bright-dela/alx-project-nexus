@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "drf_yasg",
+    "django_filters",
+    
 ]
 
 MIDDLEWARE = [
@@ -92,6 +94,10 @@ DATABASES = {
         "PASSWORD": config("POSTGRES_PASSWORD"),
         "HOST": "db",
         "PORT": 5432,
+        "CONN_MAX_AGE": 600,
+        "OPTIONS": {
+            "connect_timeout": 10,
+        }
     }
 }
 
@@ -131,6 +137,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -260,4 +269,24 @@ LOGGING = {
             "propagate": False,
         },
     },
+}
+
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+        }
+    },
+    'USE_SESSION_AUTH': False,
+    'JSON_EDITOR': True,
+    'SUPPORTED_SUBMIT_METHODS': ['get', 'post', 'put', 'delete', 'patch'],
+    'VALIDATOR_URL': None,
+}
+
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': False,
 }
