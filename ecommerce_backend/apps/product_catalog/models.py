@@ -1,12 +1,10 @@
+import uuid
 from django.db import models
 from django.utils.text import slugify
 from treebeard.mp_tree import MP_Node
-import uuid
-
 from django.conf import settings
 
-# Create your models here.
-
+# Create your models here
 
 class Category(MP_Node):
     """Model representing product categories with hierarchical structure."""
@@ -29,7 +27,6 @@ class Category(MP_Node):
             models.Index(fields=["is_active"]),
         ]
 
-    # Generate slug with the name before saving
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
@@ -39,19 +36,13 @@ class Category(MP_Node):
         return self.name
 
     def get_full_path(self):
-        """Returns the full category path, e.g., 'Electronics > Phones > Accessories'"""
-
         ancestors = self.get_ancestors()
-
         path_parts = [category.name for category in ancestors] + [self.name]
-
         return " > ".join(path_parts)
-    
 
 
 
 class Brand(models.Model):
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
@@ -78,9 +69,7 @@ class Brand(models.Model):
 
 
 
-
 class Product(models.Model):
-
     CURRENCY_CHOICES = [
         ("GHS", "Ghanaian Cedi"),
         ("USD", "US Dollar"),
@@ -94,30 +83,23 @@ class Product(models.Model):
         ("discontinued", "Discontinued"),
     ]
 
-    # Basic Information
     name = models.CharField(max_length=300, db_index=True)
     slug = models.SlugField(max_length=320, unique=True, blank=True)
     sku = models.CharField(max_length=100, unique=True, db_index=True)
     description = models.TextField()
     short_description = models.TextField(max_length=500, blank=True)
 
-    # Relationships
     category = models.ForeignKey(
-        Category, 
-        on_delete=models.PROTECT, 
-        related_name="products"
+        Category, on_delete=models.PROTECT, related_name="products"
     )
 
     brand = models.ForeignKey(
-        Brand, 
-        on_delete=models.SET_NULL, 
-        null=True, blank=True, 
-        related_name="products"
+        Brand, on_delete=models.SET_NULL, null=True, blank=True, related_name="products"
     )
 
-    # Pricing and Inventory
     price = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="GHS")
+
     compare_at_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -136,25 +118,21 @@ class Product(models.Model):
 
     stock_quantity = models.PositiveIntegerField(default=0)
     low_stock_threshold = models.PositiveIntegerField(default=5)
-
-    # Status and Availability
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+
     is_featured = models.BooleanField(default=False)
     is_available = models.BooleanField(default=True)
 
-    # Flexible Attributes (for category-specific specifications)
     specifications = models.JSONField(
         default=dict,
         blank=True,
         help_text="Store dynamic attributes like screen size, RAM, color options, etc.",
     )
 
-    # Metadata
     meta_title = models.CharField(max_length=200, blank=True)
     meta_description = models.TextField(max_length=300, blank=True)
     view_count = models.PositiveIntegerField(default=0)
 
-    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -191,16 +169,14 @@ class Product(models.Model):
     @property
     def discount_percentage(self):
         if self.compare_at_price and self.compare_at_price > self.price:
-            return int(
-                ((self.compare_at_price - self.price) / self.compare_at_price) * 100
-            )
+            discount = (self.compare_at_price - self.price) / self.compare_at_price
+            return int(discount * 100)
+        
         return 0
 
 
 
-
 class ProductImage(models.Model):
-
     product = models.ForeignKey(
         Product, 
         on_delete=models.CASCADE, 
@@ -222,11 +198,13 @@ class ProductImage(models.Model):
 
     def save(self, *args, **kwargs):
         if self.is_primary:
-            ProductImage.objects.filter(
-                product=self.product, is_primary=True
-                ).exclude(
-                pk=self.pk
-            ).update(is_primary=False)
+            existing_primary = ProductImage.objects.filter(
+                product=self.product, 
+                is_primary=True
+            ).exclude(pk=self.pk)
+
+            if existing_primary.exists():
+                existing_primary.update(is_primary=False)
 
         super().save(*args, **kwargs)
 
@@ -236,6 +214,14 @@ class ProductImage(models.Model):
 
 class ProductReview(models.Model):
 
+    RATING_CHOICES = [
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        (4, 4),
+        (5, 5),
+    ]
+
     product = models.ForeignKey(
         Product, 
         on_delete=models.CASCADE, 
@@ -243,16 +229,18 @@ class ProductReview(models.Model):
     )
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name="product_reviews"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="product_reviews",
     )
-    
-    rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
+
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+
     title = models.CharField(max_length=200, blank=True)
     comment = models.TextField()
     is_verified_purchase = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -263,3 +251,6 @@ class ProductReview(models.Model):
             models.Index(fields=["product", "is_approved"]),
             models.Index(fields=["product", "rating"]),
         ]
+
+    def __str__(self):
+        return f"Review by {self.user.email} for {self.product.name}"
