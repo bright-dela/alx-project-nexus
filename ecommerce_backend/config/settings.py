@@ -190,10 +190,10 @@ SIMPLE_JWT = {
 }
 
 # Redis Cache Configuration
-DEFAULT_CACHE_ALIAS = "user_auth"
+
 
 CACHES = {
-    "user_auth": {
+    "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://redis:6379/1",
         "OPTIONS": {
