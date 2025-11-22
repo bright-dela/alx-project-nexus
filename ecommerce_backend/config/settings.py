@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
@@ -189,8 +190,10 @@ SIMPLE_JWT = {
 }
 
 # Redis Cache Configuration
+DEFAULT_CACHE_ALIAS = "user_auth"
+
 CACHES = {
-    "default": {
+    "user_auth": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://redis:6379/1",
         "OPTIONS": {
@@ -198,6 +201,16 @@ CACHES = {
         },
         "KEY_PREFIX": "auth",
         "TIMEOUT": 604800,  # 7 days default
+    },
+
+    "product_cache": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "catalog",
+        "TIMEOUT": 3600,  # default 1 hour
     }
 }
 
