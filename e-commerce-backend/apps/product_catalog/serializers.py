@@ -10,7 +10,7 @@ class CategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
 
     class Meta:
-        model: Category
+        model = Category
         fields = ["id", "name", "slug", "description", "children"]
 
     def get_children(self, object):
@@ -43,7 +43,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     brand = BrandSerializer(read_only=True)
 
     class Meta:
-        models = Product
+        model = Product
         fields = [
             "id",
             "name",
