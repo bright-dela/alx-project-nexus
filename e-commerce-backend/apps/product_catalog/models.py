@@ -9,6 +9,17 @@ import uuid
 
 # Create your models here.
 
+import uuid
+from django.db import models
+from django.utils.text import slugify
+from django.core.validators import FileExtensionValidator
+from treebeard.mp_tree import MP_Node
+
+
+from django.conf import settings
+
+# Create your models here
+
 class Category(MP_Node):
     """This model represents product categories with hierarchical structure."""
 
@@ -26,17 +37,13 @@ class Category(MP_Node):
     class Meta:
         verbose_name_plural = "Categories"
 
-
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
-
         super().save(*args, **kwargs)
-
 
     def __str__(self):
         return self.name
-    
 
     def get_full_path(self):
         ancestors = self.get_ancestors()
@@ -62,11 +69,8 @@ class Brand(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-
             self.slug = slugify(self.name)
-
         super().save(*args, **kwargs)
-
 
     def __str__(self):
         return self.name
@@ -95,26 +99,15 @@ class Product(models.Model):
     short_description = models.TextField(max_length=500, blank=True)
 
     category = models.ForeignKey(
-        Category, 
-        on_delete=models.PROTECT, 
-        related_name="products"
+        Category, on_delete=models.PROTECT, related_name="products"
     )
 
     brand = models.ForeignKey(
-        Brand, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
-        related_name="products"
+        Brand, on_delete=models.SET_NULL, null=True, blank=True, related_name="products"
     )
 
     price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    currency = models.CharField(
-        max_length=3, 
-        choices=CURRENCY_CHOICES, 
-        default="GHS"
-    )
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="GHS")
 
     compare_at_price = models.DecimalField(
         max_digits=10,
@@ -162,7 +155,6 @@ class Product(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
-
     def __str__(self):
         return self.name
 
@@ -183,18 +175,16 @@ class Product(models.Model):
         return 0
 
 
+
 class ProductImage(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
+        Product, 
+        on_delete=models.CASCADE, 
         related_name="images"
     )
 
-    image = models.ImageField(
-        upload_to="products/%Y/%m/",
-        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp"])]
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    image = models.ImageField(upload_to="products/%Y/%m/", validators=[FileExtensionValidator(allowed_extensions=["jpg","jpeg","png","webp"])])
     alt_text = models.CharField(max_length=200, blank=True)
     is_primary = models.BooleanField(default=False)
     display_order = models.PositiveIntegerField(default=0)
@@ -203,10 +193,11 @@ class ProductImage(models.Model):
     class Meta:
         ordering = ["display_order", "id"]
 
+
     def save(self, *args, **kwargs):
         if self.is_primary:
             existing_primary = ProductImage.objects.filter(
-                product=self.product,
+                product=self.product, 
                 is_primary=True
             ).exclude(pk=self.pk)
 
@@ -220,7 +211,7 @@ class ProductImage(models.Model):
 
 
 class ProductReview(models.Model):
-    
+
     RATING_CHOICES = [
         (1, 1),
         (2, 2),
@@ -231,8 +222,8 @@ class ProductReview(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
+        Product, 
+        on_delete=models.CASCADE, 
         related_name="reviews"
     )
 
