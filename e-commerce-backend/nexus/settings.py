@@ -36,12 +36,16 @@ ALLOWED_HOSTS = config(
 # Application definition
 
 INSTALLED_APPS = [
+    "apps.product_catalog",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "django_filters",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
