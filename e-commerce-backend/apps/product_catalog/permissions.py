@@ -12,3 +12,6 @@ class IsStaffOrReadOnly(permissions.BasePermission):
         
         if request.user and request.user.is_authenticated and is_staff:
             return True
+        
+        else:
+            return False
