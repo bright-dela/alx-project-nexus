@@ -6,18 +6,28 @@ from django.db.models import Avg
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
     children = serializers.SerializerMethodField()
-
+    parent_id = serializers.UUIDField(source='parent.id', read_only=True, allow_null=True)
+    level = serializers.IntegerField(read_only=True)
+    
     class Meta:
         model = Category
-        fields = ["id", "name", "slug", "description", "children"]
-
+        fields = [
+            "id", 
+            "name", 
+            "slug", 
+            "description", 
+            "image",
+            "is_active",
+            "parent_id",
+            "level",
+            "children"
+        ]
+    
     def get_children(self, object):
 
         children = object.get_children()
-        # return an empty list if category has no nested categories
-        if not children:
+        if not children.exists():
             return []
         else:
             return CategorySerializer(children, many=True, context=self.context).data

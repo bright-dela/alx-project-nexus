@@ -1,26 +1,15 @@
-from django.db import models
-from django.utils.text import slugify
-from django.core.validators import FileExtensionValidator
-from django.conf import settings
-
-from treebeard.mp_tree import MP_Node
-
-import uuid
-
-# Create your models here.
-
 import uuid
 from django.db import models
 from django.utils.text import slugify
 from django.core.validators import FileExtensionValidator
-from treebeard.mp_tree import MP_Node
+from mptt.models import MPTTModel, TreeForeignKey
 
 
 from django.conf import settings
 
 # Create your models here
 
-class Category(MP_Node):
+class Category(MPTTModel):
     """This model represents product categories with hierarchical structure."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -29,13 +18,25 @@ class Category(MP_Node):
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="categories/", blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    
+    # MPTT fields
+    parent = TreeForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    node_order_by = ["name"]
+    class MPTTMeta:
+        order_insertion_by = ['name']
 
     class Meta:
         verbose_name_plural = "Categories"
+        ordering = ['tree_id', 'lft']
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -46,10 +47,8 @@ class Category(MP_Node):
         return self.name
 
     def get_full_path(self):
-        ancestors = self.get_ancestors()
-
-        path_parts = [category.name for category in ancestors] + [self.name]
-
+        ancestors = self.get_ancestors(include_self=True)
+        path_parts = [category.name for category in ancestors]
         return " > ".join(path_parts)
 
 
