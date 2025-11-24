@@ -54,6 +54,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     ordering = ["-created_at"]
 
     pagination_class = StandardProductsPagination
+    
+    lookup_field = "slug"
 
     def get_serializer_class(self):
         if self.action == "list":
