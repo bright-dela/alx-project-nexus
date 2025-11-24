@@ -4,6 +4,8 @@ from rest_framework.exceptions import NotFound
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from django.conf import settings
+
 from .models import Category, Brand, Product, ProductReview
 
 from .serializers import (
@@ -18,7 +20,10 @@ from .serializers import (
 from .filters import ProductFilter
 from .permissions import IsStaffOrReadOnly
 from .pagination import StandardProductsPagination
+from .cache import product_cache, product_list_key, product_detail_key, category_tree_key, brand_list_key
 
+import logging
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -31,12 +36,45 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         # Get only root nodes (categories with no parent)
         return Category.objects.filter(parent__isnull=True, is_active=True)
+    
+    def list(self, request, *args, **kwargs):
+        key = category_tree_key()
+        cached = product_cache.get(key)
+
+        if cached:
+            logger.info("Category tree retrieved from cache successfully with key: {key}")
+            return Response(cached, status=status.HTTP_200_OK)
+        
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        data = serializer.data
+        product_cache.set(key=key, value=data, timeout=settings.CATEGORY_TREE_CACHE_TIMEOUT)
+
+        logger.info("Category tree cached successfully with key: {key}")
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+
 
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
     queryset= Brand.objects.filter(is_active=True).order_by("name")
     serializer_class = BrandSerializer
     permission_classes = [permissions.AllowAny]
 
+    def list(self, request, *args, **kwargs):
+        key = brand_list_key()
+        cached = product_cache.get(key)
+
+        if cached:
+            logger.info("Brand list retrieved from cache successfully with key: {key}")
+
+            return Response(cached, status=status.HTTP_200_OK)
+
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        data = serializer.data
+        product_cache.set(key, data, timeout=60 * 60)
+        logger.info(f"Brand list cached successfully with key: {key}")
+        return Response(data, status=status.HTTP_200_OK)
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.select_related("brand", "category").prefetch_related("images")
@@ -71,6 +109,12 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
     def list(self, request, *args, **kwargs):
+        key = product_list_key()
+        cached = product_cache.get(key)
+
+        if cached:
+            logger.info("Product list retrieved from cache successfully with key: {key}")
+            return Response(cached, status=status.HTTP_200_OK)
 
         # get the base queryset and apply filters on them
         queryset = self.filter_queryset(self.get_queryset())
@@ -83,7 +127,46 @@ class ProductViewSet(viewsets.ModelViewSet):
         # build a paginated style response
         response_data = self.get_paginated_response(serializer.data).data
 
+        # cache the response
+        product_cache.set(key=key, value=response_data, timeout=settings.PRODUCT_LIST_CACHE_TIMEOUT)
+
+        logger.info(f"Product list cached successfully with key: {key}")
+
         return Response(response_data, status=status.HTTP_200_OK)
+    
+
+        def retrieve(self, request, *args, **kwargs):
+            instance = self.get_object()
+            key = product_detail_key(instance.id)
+            cached = product_cache.get(key)
+
+            if cached:
+                try:
+                    Product.objects.filter(pk=instance.pk).update(
+                        view_count=F("view_count") + 1
+                    )
+                    logger.info(f"Product detail retrieved from cache with key: {key}")
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to increment view count for product {instance.pk}: {str(e)}"
+                    )
+                return Response(cached)
+
+            serializer = self.get_serializer(instance)
+            data = serializer.data
+
+            try:
+                Product.objects.filter(pk=instance.pk).update(
+                    view_count=F("view_count") + 1
+                )
+                logger.info(f"Product detail retrieved and cached with key: {key}")
+            except Exception as e:
+                logger.warning(
+                    f"Failed to increment view count for product {instance.pk}: {str(e)}"
+                )
+
+            product_cache.set(key, data, timeout=PRODUCT_DETAIL_CACHE_TIMEOUT)
+            return Response(data, status=status.HTTP_200_OK)
     
     
 class ProductReviewViewSet(
