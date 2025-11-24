@@ -24,11 +24,13 @@ from .pagination import StandardProductsPagination
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    # get the root parent
-    queryset = Category.get_root_nodes()
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
-
+    lookup_field = 'slug'
+    
+    def get_queryset(self):
+        # Get only root nodes (categories with no parent)
+        return Category.objects.filter(parent__isnull=True, is_active=True)
 
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
     queryset= Brand.objects.filter(is_active=True).order_by("name")
