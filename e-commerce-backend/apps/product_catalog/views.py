@@ -12,6 +12,7 @@ from .serializers import (
     ProductListSerializer,
     ProductDetailSerializer,
     ProductCreateUpdateSerializer,
+    ProductReviewCreateSerializer,
     ProductReviewSerializer,
 )
 
@@ -106,7 +107,7 @@ class ProductReviewViewSet(
     
     def get_serializer_class(self):
         if self.action == "create":
-            return ProductCreateUpdateSerializer
+            return ProductReviewCreateSerializer
         else:
             return ProductReviewSerializer
         
