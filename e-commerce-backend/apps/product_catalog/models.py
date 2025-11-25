@@ -37,6 +37,10 @@ class Category(MPTTModel):
     class Meta:
         verbose_name_plural = "Categories"
         ordering = ['tree_id', 'lft']
+        indexes = [
+            models.Index(fields=["slug"]),
+            models.Index(fields=["is_active"]),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -65,6 +69,10 @@ class Brand(models.Model):
 
     class Meta:
         ordering = ["name"]
+        indexes = [
+            models.Index(fields=["slug"]),
+            models.Index(fields=["is_active"]),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -147,6 +155,16 @@ class Product(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["slug"]),
+            models.Index(fields=["sku"]),
+            models.Index(fields=["status", "is_available"]),
+            models.Index(fields=["category", "status"]),
+            models.Index(fields=["brand", "status"]),
+            models.Index(fields=["price"]),
+            models.Index(fields=["is_featured", "status"]),
+            models.Index(fields=["-created_at"]),
+        ]
 
 
     def save(self, *args, **kwargs):
@@ -191,6 +209,10 @@ class ProductImage(models.Model):
 
     class Meta:
         ordering = ["display_order", "id"]
+        indexes = [
+            models.Index(fields=["product", "is_primary"]),
+            models.Index(fields=["product", "display_order"]),
+        ]
 
 
     def save(self, *args, **kwargs):
@@ -245,6 +267,10 @@ class ProductReview(models.Model):
     class Meta:
         ordering = ["-created_at"]
         unique_together = ["product", "user"]
+        indexes = [
+            models.Index(fields=["product", "is_approved"]),
+            models.Index(fields=["product", "rating"]),
+        ]
 
     def __str__(self):
         return f"Review by {self.user.email} for {self.product.name}"
