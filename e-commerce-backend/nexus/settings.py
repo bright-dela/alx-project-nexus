@@ -28,7 +28,7 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS", 
+    "ALLOWED_HOSTS",
     default="",
     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
 )
@@ -37,6 +37,7 @@ ALLOWED_HOSTS = config(
 # Application definition
 
 INSTALLED_APPS = [
+    "apps.authentication",
     "apps.product_catalog",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -45,9 +46,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "drf_yasg",
     "mptt",
+    
 ]
 
 MIDDLEWARE = [
@@ -133,7 +137,7 @@ STATIC_URL = "static/"
 
 MEDIA_URL = "/media/"
 
-MEDIA_ROOT = BASE_DIR / "media/" 
+MEDIA_ROOT = BASE_DIR / "media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -153,7 +157,6 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     },
-
     "product_cache": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://redis:6379/2",
@@ -162,7 +165,7 @@ CACHES = {
         },
         "KEY_PREFIX": "catalog",
         "TIMEOUT": 3600,  # default 1 hour
-    }
+    },
 }
 
 
@@ -212,4 +215,18 @@ LOGGING = {
             "propagate": False,
         },
     },
+}
+
+
+# Custom User Model
+AUTH_USER_MODEL = "authentication.User"
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
