@@ -37,7 +37,7 @@ services:
   celery_worker:
     build: .
     container_name: celery_container
-    command: celery -A config worker --loglevel=info
+    command: celery -A nexus worker --loglevel=info
     volumes:
       - .:/app
     env_file:

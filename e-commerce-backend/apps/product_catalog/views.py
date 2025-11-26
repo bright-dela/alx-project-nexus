@@ -168,7 +168,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                     f"Failed to increment view count for product {instance.pk}: {str(e)}"
                 )
 
-            product_cache.set(key, data, timeout=PRODUCT_DETAIL_CACHE_TIMEOUT)
+            product_cache.set(key, data, timeout=settings.PRODUCT_DETAIL_CACHE_TIMEOUT)
             return Response(data, status=status.HTTP_200_OK)
     
     
