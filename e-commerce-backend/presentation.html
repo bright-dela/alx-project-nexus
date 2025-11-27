@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus E-commerce Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            color: #333;
+        }
+
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .slide {
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 60px;
+            display: none;
+            flex-direction: column;
+            position: relative;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .slide-title {
+            font-size: 3em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .slide-subtitle {
+            font-size: 1.3em;
+            color: #666;
+            font-weight: 300;
+        }
+
+        .slide-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 20px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .feature-desc {
+            font-size: 0.95em;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .tech-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .architecture-diagram {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .layer {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .layer-title {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .layer-content {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-weight: 500;
+        }
+
+        .nav-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .slide-counter {
+            color: #666;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #f39c12;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-number {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .api-endpoint {
+            background: #2c3e50;
+            color: #2ecc71;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+
+        .method {
+            color: #3498db;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <div class="slide-header">
+                <div class="slide-title">🚀 Nexus E-commerce Platform</div>
+                <div class="slide-subtitle">A Modern, Scalable E-commerce Backend Solution</div>
+            </div>
+            <div class="slide-content">
+                <div class="highlight-box">
+                    <h3 style="margin-bottom: 15px; font-size: 1.4em;">Project Overview</h3>
+                    <p style="font-size: 1.1em; line-height: 1.8;">
+                        Nexus is a production-ready e-commerce backend built with Django REST Framework, 
+                        featuring advanced authentication, comprehensive product management, intelligent caching, 
+                        and asynchronous task processing. Designed for scalability and performance from day one.
+                    </p>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-number">2</div>
+                        <div class="metric-label">Core Apps</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-number">20+</div>
+                        <div class="metric-label">API Endpoints</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-number">3</div>
+                        <div class="metric-label">Cache Layers</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-number">100%</div>
+                        <div class="metric-label">REST Compliant</div>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()" disabled>Previous</button>
+                <span class="slide-counter">1 / 8</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 2: Tech Stack -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">🛠️ Technology Stack</div>
+                <div class="slide-subtitle">Built with industry-standard tools and frameworks</div>
+            </div>
+            <div class="slide-content">
+                <h3 style="margin-bottom: 20px; font-size: 1.5em; color: #667eea;">Backend & Framework</h3>
+                <div class="tech-stack">
+                    <div class="tech-badge">Django 5.2</div>
+                    <div class="tech-badge">Django REST Framework</div>
+                    <div class="tech-badge">PostgreSQL 15</div>
+                    <div class="tech-badge">Redis 8.4</div>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0; font-size: 1.5em; color: #667eea;">Authentication & Security</h3>
+                <div class="tech-stack">
+                    <div class="tech-badge">JWT (SimpleJWT)</div>
+                    <div class="tech-badge">Google OAuth 2.0</div>
+                    <div class="tech-badge">Token Blacklisting</div>
+                    <div class="tech-badge">OTP Verification</div>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0; font-size: 1.5em; color: #667eea;">Infrastructure & Tools</h3>
+                <div class="tech-stack">
+                    <div class="tech-badge">Celery 5.5</div>
+                    <div class="tech-badge">Docker & Docker Compose</div>
+                    <div class="tech-badge">django-mptt</div>
+                    <div class="tech-badge">drf-yasg (Swagger)</div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">2 / 8</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 3: Architecture -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">🏗️ System Architecture</div>
+                <div class="slide-subtitle">Multi-layered, scalable design</div>
+            </div>
+            <div class="slide-content">
+                <div class="architecture-diagram">
+                    <div class="layer">
+                        <div class="layer-title">🌐 API Layer</div>
+                        <div class="layer-content">RESTful endpoints with Django REST Framework, JWT authentication, comprehensive filtering, pagination, and search capabilities</div>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">⚡ Caching Layer</div>
+                        <div class="layer-content">Three-tier Redis caching strategy: product catalog cache, authentication cache, and default cache for optimal performance</div>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">💼 Business Logic Layer</div>
+                        <div class="layer-content">Service-oriented architecture with dedicated services for OTP, email, geolocation, login tracking, and token management</div>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">📨 Async Task Layer</div>
+                        <div class="layer-content">Celery workers handle email delivery, cache invalidation, and background processing with automatic retry logic</div>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">💾 Data Layer</div>
+                        <div class="layer-content">PostgreSQL database with optimized indexing, UUID primary keys, and hierarchical category structure using MPTT</div>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">3 / 8</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 4: Authentication Features -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">🔐 Authentication System</div>
+                <div class="slide-subtitle">Enterprise-grade security features</div>
+            </div>
+            <div class="slide-content">
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📧</div>
+                        <div class="feature-title">Email Verification</div>
+                        <div class="feature-desc">Six-digit OTP codes with ten-minute expiration, sent via Celery tasks for reliable delivery</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎫</div>
+                        <div class="feature-title">JWT Tokens</div>
+                        <div class="feature-desc">Access and refresh tokens with automatic rotation and blacklisting after logout</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔑</div>
+                        <div class="feature-title">Password Reset</div>
+                        <div class="feature-desc">Secure OTP-based password recovery flow with validation and expiration</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <div class="feature-title">Social Authentication</div>
+                        <div class="feature-desc">Google OAuth 2.0 integration with automatic user creation and provider linking</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <div class="feature-title">Brute Force Protection</div>
+                        <div class="feature-desc">Account lockout after five failed attempts with thirty-minute cooldown period</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📍</div>
+                        <div class="feature-title">Geolocation Tracking</div>
+                        <div class="feature-desc">IP-based location detection for unusual login alerts and security monitoring</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Login History</div>
+                        <div class="feature-desc">Complete audit trail with IP addresses, user agents, timestamps, and location data</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🚨</div>
+                        <div class="feature-title">Security Claims</div>
+                        <div class="feature-desc">Automated alerts for suspicious activity, new locations, and multiple failed attempts</div>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">4 / 8</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 5: Product Catalog Features -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">📦 Product Catalog</div>
+                <div class="slide-subtitle">Comprehensive product management system</div>
+            </div>
+            <div class="slide-content">
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🗂️</div>
+                        <div class="feature-title">Hierarchical Categories</div>
+                        <div class="feature-desc">Unlimited category nesting with MPTT for efficient tree queries and full path generation</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏷️</div>
+                        <div class="feature-title">Brand Management</div>
+                        <div class="feature-desc">Complete brand profiles with logos, descriptions, and product associations</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💰</div>
+                        <div class="feature-title">Flexible Pricing</div>
+                        <div class="feature-desc">Multi-currency support, compare-at pricing, cost tracking, and automatic discount calculations</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📸</div>
+                        <div class="feature-title">Product Images</div>
+                        <div class="feature-desc">Multiple images per product with primary image selection and custom ordering</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <div class="feature-title">Inventory Tracking</div>
+                        <div class="feature-desc">Stock quantity management with low stock thresholds and automatic status updates</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⭐</div>
+                        <div class="feature-title">Product Reviews</div>
+                        <div class="feature-desc">User reviews with ratings, approval workflow, verified purchase badges, and average calculations</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <div class="feature-title">Advanced Filtering</div>
+                        <div class="feature-desc">Filter by price range, category, brand, stock status, and featured products</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Dynamic Specifications</div>
+                        <div class="feature-desc">JSON field for flexible product attributes without schema changes</div>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">5 / 8</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 6: Caching Strategy -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">⚡ Intelligent Caching</div>
+                <div class="slide-subtitle">Optimized for performance and scalability</div>
+            </div>
+            <div class="slide-content">
+                <div class="highlight-box">
+                    <h3 style="margin-bottom: 15px; font-size: 1.4em;">Three-Tier Cache Strategy</h3>
+                    <p style="font-size: 1.05em; line-height: 1.7;">
+                        Nexus implements a sophisticated caching system with dedicated Redis databases for different concerns, ensuring optimal performance and preventing cache pollution.
+                    </p>
+                </div>
+                <div class="architecture-diagram" style="margin-top: 30px;">
+                    <div class="layer">
+                        <div class="layer-title">🛍️ Product Cache (Redis DB 2)</div>
+                        <div class="layer-content">
+                            Stores category trees, brand lists, product listings, and product details. 
+                            Automatic invalidation via Celery when products or categories change. 
+                            Smart key generation based on query parameters for accurate cache hits.
+                        </div>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">🔐 Authentication Cache (Redis DB 3)</div>
+                        <div class="layer-content">
+                            Manages OTP codes with ten-minute TTL, failed login attempt counters, 
+                            account lockout status, and JWT token blacklist with automatic expiration.
+                        </div>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">📋 Default Cache (Redis DB 1)</div>
+                        <div class="layer-content">
+                            General-purpose caching for session data and other application needs, 
+                            keeping authentication and product caches isolated and performant.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">6 / 8</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 7: Django Admin Dashboard -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">⚙️ Django Admin Dashboard</div>
+                <div class="slide-subtitle">Powerful administrative interface for complete catalog management</div>
+            </div>
+            <div class="slide-content">
+                <div class="highlight-box">
+                    <h3 style="margin-bottom: 15px; font-size: 1.4em;">Complete CRUD Operations Without Code</h3>
+                    <p style="font-size: 1.05em; line-height: 1.7;">
+                        The Django Admin dashboard provides a fully-featured interface for managing all aspects of 
+                        the product catalog, eliminating the need for custom admin panels or separate CMS systems.
+                    </p>
+                </div>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🗂️</div>
+                        <div class="feature-title">Category Management</div>
+                        <div class="feature-desc">Drag-and-drop hierarchical tree interface with MPTT, showing indented category levels and full path visualization</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <div class="feature-title">Product Administration</div>
+                        <div class="feature-desc">Rich product editor with inline image management, pricing controls, inventory tracking, and bulk status updates</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏷️</div>
+                        <div class="feature-title">Brand Operations</div>
+                        <div class="feature-desc">Full brand CRUD with logo preview, product count display, and active links to filtered product lists</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📸</div>
+                        <div class="feature-title">Image Management</div>
+                        <div class="feature-desc">Inline image upload with preview thumbnails, primary image selection, and custom display ordering</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⭐</div>
+                        <div class="feature-title">Review Moderation</div>
+                        <div class="feature-desc">Approve or reject reviews with bulk actions, star rating visualization, and verified purchase badges</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <div class="feature-title">Advanced Filtering</div>
+                        <div class="feature-desc">Filter products by status, category, brand, stock level, and creation date with powerful search capabilities</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Visual Indicators</div>
+                        <div class="feature-desc">Color-coded stock status, discount percentages, formatted prices, and rating stars for quick insights</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">Bulk Actions</div>
+                        <div class="feature-desc">Mark products as active or draft, toggle featured status, and approve reviews in bulk with custom admin actions</div>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">7 / 9</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 8: API Endpoints -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">🔌 API Endpoints</div>
+                <div class="slide-subtitle">RESTful API with comprehensive documentation</div>
+            </div>
+            <div class="slide-content">
+                <h3 style="margin-bottom: 20px; font-size: 1.4em; color: #667eea;">Authentication Endpoints</h3>
+                <div class="api-endpoint"><span class="method">POST</span>/api/auth/register/</div>
+                <div class="api-endpoint"><span class="method">POST</span>/api/auth/verify-email/</div>
+                <div class="api-endpoint"><span class="method">POST</span>/api/auth/login/</div>
+                <div class="api-endpoint"><span class="method">POST</span>/api/auth/social/</div>
+                <div class="api-endpoint"><span class="method">GET</span>/api/auth/me/</div>
+
+                <h3 style="margin: 25px 0 20px 0; font-size: 1.4em; color: #667eea;">Product Catalog Endpoints</h3>
+                <div class="api-endpoint"><span class="method">GET</span>/api/catalog/categories/</div>
+                <div class="api-endpoint"><span class="method">GET</span>/api/catalog/brands/</div>
+                <div class="api-endpoint"><span class="method">GET</span>/api/catalog/products/</div>
+                <div class="api-endpoint"><span class="method">GET</span>/api/catalog/products/{slug}/</div>
+                <div class="api-endpoint"><span class="method">POST</span>/api/catalog/products/{id}/reviews/</div>
+
+                <div class="highlight-box" style="margin-top: 25px;">
+                    <p style="font-size: 1.05em;">
+                        <strong>📚 Interactive Documentation:</strong> Complete Swagger UI and ReDoc documentation 
+                        available at /swagger/ and /redoc/ endpoints for easy API exploration and testing.
+                    </p>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">8 / 9</span>
+                <button class="nav-button" onclick="nextSlide()">Next</button>
+            </div>
+        </div>
+
+        <!-- Slide 9: Deployment & Future -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">🚀 Deployment & Future</div>
+                <div class="slide-subtitle">Production-ready and scalable</div>
+            </div>
+            <div class="slide-content">
+                <h3 style="margin-bottom: 20px; font-size: 1.5em; color: #667eea;">Deployment Stack</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🐳</div>
+                        <div class="feature-title">Docker Compose</div>
+                        <div class="feature-desc">Multi-container setup with Django, PostgreSQL, Redis, and Celery worker</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <div class="feature-title">Environment Config</div>
+                        <div class="feature-desc">Twelve-factor app principles with environment variables for all sensitive data</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-title">Security Hardened</div>
+                        <div class="feature-desc">HTTPS ready, CSRF protection, rate limiting, and secure password validation</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Comprehensive Logging</div>
+                        <div class="feature-desc">Structured logging for debugging, monitoring, and performance analysis</div>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px; font-size: 1.4em;">🎯 Key Achievements</h3>
+                    <p style="font-size: 1.05em; line-height: 1.8;">
+                        Built a production-ready e-commerce backend with advanced authentication, comprehensive product management, 
+                        intelligent caching, asynchronous processing, and complete API documentation. The system handles 
+                        security, performance, and scalability from the ground up, ready for real-world deployment.
+                    </p>
+                </div>
+            </div>
+            <div class="navigation">
+                <button class="nav-button" onclick="previousSlide()">Previous</button>
+                <span class="slide-counter">9 / 9</span>
+                <button class="nav-button" onclick="nextSlide()" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function updateSlideCounter() {
+            document.querySelectorAll('.slide-counter').forEach(counter => {
+                counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            });
+        }
+
+        function updateNavigationButtons() {
+            const prevButtons = document.querySelectorAll('.navigation button:first-child');
+            const nextButtons = document.querySelectorAll('.navigation button:last-child');
+
+            prevButtons.forEach(btn => {
+                btn.disabled = currentSlide === 0;
+            });
+
+            nextButtons.forEach(btn => {
+                btn.disabled = currentSlide === totalSlides - 1;
+            });
+        }
+
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            updateSlideCounter();
+            updateNavigationButtons();
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        updateSlideCounter();
+        updateNavigationButtons();
+    </script>
+</body>
+</html>
