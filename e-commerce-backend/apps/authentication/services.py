@@ -1,7 +1,6 @@
 import secrets
 import requests
 from django.conf import settings
-from django.core.mail import send_mail
 from django.core.cache import caches
 from django.utils import timezone
 from datetime import timedelta
@@ -10,6 +9,12 @@ from .models import User, LoginHistory, SecurityClaim
 import logging
 
 logger = logging.getLogger(__name__)
+
+from .tasks import (
+    send_verification_email_task,
+    send_password_reset_email_task,
+    send_security_alert_email_task,
+)
 
 # Using auth_cache from settings
 auth_cache = caches["auth_cache"]
@@ -23,9 +28,8 @@ class OTPService:
 
     @staticmethod
     def generate_otp():
-        """
-        Generate a cryptographically secure 6-digit OTP.
-        """
+        """Generate a cryptographically secure 6-digit OTP"""
+
         return "".join(
             [str(secrets.randbelow(10)) for _ in range(OTPService.OTP_LENGTH)]
         )
@@ -37,6 +41,7 @@ class OTPService:
         otp = cls.generate_otp()
         key = f"otp:{purpose}:{email}"
         auth_cache.set(key, otp, cls.OTP_EXPIRY)
+
         return otp
 
     @classmethod
@@ -64,112 +69,85 @@ class OTPService:
 
 
 class EmailService:
-    """Service for sending emails"""
+    """
+    Service for managing email operations through Celery tasks.
+    """
 
     @staticmethod
     def send_verification_email(user, otp):
-        """Send email verification OTP"""
+        """
+        Schedule a verification email to be sent asynchronously.
 
-        subject = "Verify Your Email Address - Nexus E-commerce"
+        Args:
+            user: User model instance
+            otp: One-time password for email verification
 
-        message = f"""
-Hello {user.first_name or "Customer"},
-
-Welcome to Nexus E-commerce! Please verify your email address to complete your registration.
-
-Your verification code is: {otp}
-
-This code will expire in 10 minutes.
-
-If you didn't create an account, please ignore this email.
-
-Best regards,
-Nexus E-commerce Team
+        Returns:
+            AsyncResult: Celery task result object for tracking the task
         """
 
-        try:
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-        except Exception as e:
+        task_result = send_verification_email_task.delay(
+            user_email=user.email, user_first_name=user.first_name, otp=otp
+        )
 
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error sending verification email to {user.email}: {e}")
+        logger.info(
+            f"Verification email task queued for {user.email}. "
+            f"Task ID: {task_result.id}"
+        )
+
+        return task_result
+
 
     @staticmethod
     def send_password_reset_email(email, otp):
-        """Send password reset OTP"""
+        """
+        Schedule a password reset email to be sent asynchronously.
 
-        subject = "Password Reset Request - Nexus E-commerce"
-        message = f"""
-Hello,
+        Args:
+            email: Recipient's email address
+            otp: One-time password for password reset
 
-You requested to reset your password for your Nexus E-commerce account.
-
-Your password reset code is: {otp}
-
-This code will expire in 10 minutes.
-
-If you didn't request a password reset, please ignore this email and your password will remain unchanged.
-
-Best regards,
-Nexus E-commerce Team
+        Returns:
+            AsyncResult: Celery task result object for tracking the task
         """
 
-        try:
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
-            )
-        except Exception as e:
+        task_result = send_password_reset_email_task.delay(user_email=email, otp=otp)
 
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error sending password reset email to {email}: {e}")
+        logger.info(
+            f"Password reset email task queued for {email}. "
+            f"Task ID: {task_result.id}"
+        )
+
+        return task_result
+
 
     @staticmethod
     def send_security_alert(user, claim_type, details):
-        """Send security alert email"""
+        """
+        Schedule a security alert email to be sent asynchronously.
 
-        subject = "Security Alert - Unusual Activity Detected"
+        Args:
+            user: User model instance
+            claim_type: Type of security claim (e.g., "unusual_location")
+            details: Detailed description of the security event
 
-        message = f"""
-Hello {user.first_name or "Customer"},
-
-We detected unusual activity on your Nexus E-commerce account:
-
-Alert Type: {claim_type}
-Details: {details}
-Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
-
-If this was you, you can safely ignore this email. Otherwise, we recommend:
-1. Changing your password immediately
-2. Reviewing your recent login history
-
-If you need assistance, please contact our support team.
-
-Best regards,
-Nexus E-commerce Security Team
+        Returns:
+            AsyncResult: Celery task result object for tracking the task
         """
 
-        try:
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-        except Exception as e:
+        task_result = send_security_alert_email_task.delay(
+            user_email=user.email,
+            user_first_name=user.first_name,
+            claim_type=claim_type,
+            details=details,
+        )
 
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error sending security alert to {user.email}: {e}")
+        logger.info(
+            f"Security alert email task queued for {user.email}. "
+            f"Alert type: {claim_type}. Task ID: {task_result.id}"
+        )
+
+        return task_result
 
 
 class GeoLocationService:
@@ -207,8 +185,7 @@ class GeoLocationService:
                         "longitude": data.get("lon"),
                     }
         except Exception as e:
-
-            logger = logging.getLogger(__name__)
+        
             logger.error(f"Error fetching geolocation for {ip_address}: {e}")
 
         # Return empty data on error
@@ -256,10 +233,10 @@ class LoginTrackingService:
 
         return login_history
 
+
     @staticmethod
     def get_client_ip(request):
         """Extract client IP from request"""
-
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
             ip = x_forwarded_for.split(",")[0].strip()
@@ -267,10 +244,10 @@ class LoginTrackingService:
             ip = request.META.get("REMOTE_ADDR", "127.0.0.1")
         return ip
 
+
     @classmethod
     def track_failed_attempt(cls, email, ip_address):
         """Track failed login attempts"""
-        
         key = f"failed_login:{email}"
 
         # Get current count
@@ -290,6 +267,7 @@ class LoginTrackingService:
                     description=f"Account locked due to {failed_count} failed login attempts",
                     ip_address=ip_address,
                 )
+                # Send security alert asynchronously
                 EmailService.send_security_alert(
                     user,
                     "Account Locked",
@@ -349,6 +327,7 @@ class LoginTrackingService:
                     description=f'Login from new location: {location_data["city"]}, {location_data["country"]}',
                     ip_address=ip_address,
                 )
+                # Send security alert asynchronously
                 EmailService.send_security_alert(
                     user,
                     "Login from New Location",
