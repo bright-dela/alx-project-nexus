@@ -1,5 +1,4 @@
-import redis
-import random
+import secrets
 import requests
 from django.conf import settings
 from django.core.mail import send_mail
@@ -7,6 +6,10 @@ from django.core.cache import caches
 from django.utils import timezone
 from datetime import timedelta
 from .models import User, LoginHistory, SecurityClaim
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Using auth_cache from settings
 auth_cache = caches["auth_cache"]
@@ -20,14 +23,17 @@ class OTPService:
 
     @staticmethod
     def generate_otp():
-        """Generate a 6-digit OTP"""
+        """
+        Generate a cryptographically secure 6-digit OTP.
+        """
         return "".join(
-            [str(random.randint(0, 9)) for _ in range(OTPService.OTP_LENGTH)]
+            [str(secrets.randbelow(10)) for _ in range(OTPService.OTP_LENGTH)]
         )
 
     @classmethod
     def create_otp(cls, email, purpose="verification"):
         """Create and store OTP in cache"""
+
         otp = cls.generate_otp()
         key = f"otp:{purpose}:{email}"
         auth_cache.set(key, otp, cls.OTP_EXPIRY)
@@ -36,6 +42,7 @@ class OTPService:
     @classmethod
     def verify_otp(cls, email, otp, purpose="verification"):
         """Verify OTP from cache"""
+
         key = f"otp:{purpose}:{email}"
         stored_otp = auth_cache.get(key)
 
@@ -48,15 +55,12 @@ class OTPService:
         else:
             return False
 
-
     @classmethod
     def delete_otp(cls, email, purpose="verification"):
         """Delete OTP from cache"""
+
         key = f"otp:{purpose}:{email}"
         auth_cache.delete(key)
-
-
-
 
 
 class EmailService:
@@ -69,7 +73,7 @@ class EmailService:
         subject = "Verify Your Email Address - Nexus E-commerce"
 
         message = f"""
-Hello {user.first_name or user.email},
+Hello {user.first_name or "Customer"},
 
 Welcome to Nexus E-commerce! Please verify your email address to complete your registration.
 
@@ -92,14 +96,14 @@ Nexus E-commerce Team
                 fail_silently=False,
             )
         except Exception as e:
-            print(f"Error sending verification email: {e}")
-            # In production, log this properly
 
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending verification email to {user.email}: {e}")
 
     @staticmethod
     def send_password_reset_email(email, otp):
         """Send password reset OTP"""
-        
+
         subject = "Password Reset Request - Nexus E-commerce"
         message = f"""
 Hello,
@@ -125,8 +129,9 @@ Nexus E-commerce Team
                 fail_silently=False,
             )
         except Exception as e:
-            print(f"Error sending password reset email: {e}")
 
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending password reset email to {email}: {e}")
 
     @staticmethod
     def send_security_alert(user, claim_type, details):
@@ -135,7 +140,7 @@ Nexus E-commerce Team
         subject = "Security Alert - Unusual Activity Detected"
 
         message = f"""
-Hello {user.first_name or user.email},
+Hello {user.first_name or "Customer"},
 
 We detected unusual activity on your Nexus E-commerce account:
 
@@ -146,7 +151,6 @@ Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
 If this was you, you can safely ignore this email. Otherwise, we recommend:
 1. Changing your password immediately
 2. Reviewing your recent login history
-3. Enabling two-factor authentication (coming soon)
 
 If you need assistance, please contact our support team.
 
@@ -163,10 +167,9 @@ Nexus E-commerce Security Team
                 fail_silently=False,
             )
         except Exception as e:
-            print(f"Error sending security alert: {e}")
 
-
-
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error sending security alert to {user.email}: {e}")
 
 
 class GeoLocationService:
@@ -204,7 +207,9 @@ class GeoLocationService:
                         "longitude": data.get("lon"),
                     }
         except Exception as e:
-            print(f"Error fetching geolocation for {ip_address}: {e}")
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error fetching geolocation for {ip_address}: {e}")
 
         # Return empty data on error
         return {
@@ -215,8 +220,6 @@ class GeoLocationService:
             "latitude": None,
             "longitude": None,
         }
-
-
 
 
 class LoginTrackingService:
@@ -253,10 +256,10 @@ class LoginTrackingService:
 
         return login_history
 
-
     @staticmethod
     def get_client_ip(request):
         """Extract client IP from request"""
+
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
             ip = x_forwarded_for.split(",")[0].strip()
@@ -267,6 +270,7 @@ class LoginTrackingService:
     @classmethod
     def track_failed_attempt(cls, email, ip_address):
         """Track failed login attempts"""
+        
         key = f"failed_login:{email}"
 
         # Get current count

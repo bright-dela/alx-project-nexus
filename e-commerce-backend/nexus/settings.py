@@ -190,6 +190,9 @@ CELERY_TIMEZONE = "UTC"
 
 
 # Logging Configuration
+# Create logs directory if it doesn't exist
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
     "version": 1,
@@ -207,7 +210,7 @@ LOGGING = {
         },
         "file": {
             "class": "logging.FileHandler",
-            "filename": BASE_DIR / "logs" / "debug.log",
+            "filename": LOGS_DIR / "debug.log",
             "formatter": "verbose",
         },
     },
@@ -226,7 +229,12 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        "apps.authentication": {  # NEW: Authentication specific logging
+        "apps.authentication": {
+            "handlers": ["console", "file"] if not DEBUG else ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "apps.product_catalog": {
             "handlers": ["console", "file"] if not DEBUG else ["console"],
             "level": "DEBUG",
             "propagate": False,
@@ -238,6 +246,7 @@ LOGGING = {
         },
     },
 }
+
 
 
 # REST Framework Configuration
@@ -272,7 +281,7 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,
     
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'SIGNING_KEY': config("JWT_SECRET_KEY"),
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
     'ISSUER': None,
@@ -291,12 +300,12 @@ SIMPLE_JWT = {
 
 # Email Configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = config("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(config("EMAIL_PORT", 587))
+EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", "noreply@example.com")
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
 
 # Social Authentication
 GOOGLE_OAUTH_CLIENT_ID = config("GOOGLE_OAUTH_CLIENT_ID")
