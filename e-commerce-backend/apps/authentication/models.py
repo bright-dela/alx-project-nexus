@@ -8,7 +8,6 @@ from .managers import CustomUserManager
 # Create your models here.
 
 
-
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True, db_index=True)
@@ -33,14 +32,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = "users"
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["provider", "provider_id"]),
+        ]
 
     def __str__(self):
         return self.email
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
-
-
 
 
 class LoginHistory(models.Model):
@@ -72,11 +73,13 @@ class LoginHistory(models.Model):
     class Meta:
         db_table = "login_history"
         ordering = ["-created_at"]
-    
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["ip_address"]),
+        ]
 
     def __str__(self):
         return f"{self.user.email} - {self.ip_address} - {self.created_at}"
-
 
 
 
@@ -102,7 +105,9 @@ class SecurityClaim(models.Model):
     class Meta:
         db_table = "security_claims"
         ordering = ["-created_at"]
-    
-    
+        indexes = [
+            models.Index(fields=["user", "resolved"]),
+        ]
+
     def __str__(self):
         return f"{self.user.email} - {self.claim_type}"
