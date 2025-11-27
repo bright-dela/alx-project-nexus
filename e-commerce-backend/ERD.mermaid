@@ -1,0 +1,134 @@
+erDiagram
+    User ||--o{ LoginHistory : "has login attempts"
+    User ||--o{ SecurityClaim : "has security alerts"
+    User ||--o{ ProductReview : "writes reviews"
+    
+    Category ||--o{ Category : "contains subcategories"
+    Category ||--o{ Product : "contains products"
+    
+    Brand ||--o{ Product : "manufactures products"
+    
+    Product ||--o{ ProductImage : "has images"
+    Product ||--o{ ProductReview : "receives reviews"
+    
+    User {
+        uuid id PK
+        string email UK
+        string password
+        string first_name
+        string last_name
+        boolean is_active
+        boolean is_staff
+        boolean is_verified
+        datetime date_joined
+        datetime last_login_at
+        string provider
+        string provider_id
+    }
+    
+    LoginHistory {
+        uuid id PK
+        uuid user_id FK
+        string ip_address
+        text user_agent
+        string country
+        string country_code
+        string city
+        string region
+        decimal latitude
+        decimal longitude
+        boolean login_successful
+        string failure_reason
+        datetime created_at
+    }
+    
+    SecurityClaim {
+        uuid id PK
+        uuid user_id FK
+        string claim_type
+        text description
+        string ip_address
+        boolean resolved
+        datetime resolved_at
+        datetime created_at
+    }
+    
+    Category {
+        uuid id PK
+        string name UK
+        string slug UK
+        text description
+        string image
+        boolean is_active
+        uuid parent_id FK
+        integer lft
+        integer rght
+        integer tree_id
+        integer level
+        datetime created_at
+        datetime updated_at
+    }
+    
+    Brand {
+        uuid id PK
+        string name UK
+        string slug UK
+        string logo
+        text description
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+    
+    Product {
+        uuid id PK
+        string name
+        string slug UK
+        string sku UK
+        text description
+        text short_description
+        uuid category_id FK
+        uuid brand_id FK
+        decimal price
+        string currency
+        decimal compare_at_price
+        decimal cost_price
+        integer stock_quantity
+        integer low_stock_threshold
+        string status
+        boolean is_featured
+        boolean is_available
+        json specifications
+        string meta_title
+        text meta_description
+        integer view_count
+        datetime created_at
+        datetime updated_at
+        datetime published_at
+    }
+    
+    ProductImage {
+        uuid id PK
+        uuid product_id FK
+        string image
+        string alt_text
+        boolean is_primary
+        integer display_order
+        datetime created_at
+    }
+    
+    ProductReview {
+        uuid id PK
+        uuid product_id FK
+        uuid user_id FK
+        integer rating
+        string title
+        text comment
+        boolean is_verified_purchase
+        boolean is_approved
+        datetime created_at
+        datetime updated_at
+    }
+
+
+    
