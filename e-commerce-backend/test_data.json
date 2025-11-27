@@ -1,0 +1,518 @@
+[
+  {
+    "model": "product_catalog.category",
+    "pk": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+    "fields": {
+      "name": "Electronics",
+      "slug": "electronics",
+      "description": "All electronic devices and accessories",
+      "is_active": true,
+      "parent": null,
+      "lft": 1,
+      "level": 0,
+      "tree_id": 1,
+      "rght": 14
+    }
+  },
+  {
+    "model": "product_catalog.category",
+    "pk": "b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e",
+    "fields": {
+      "name": "Smartphones",
+      "slug": "smartphones",
+      "description": "Latest smartphones from top brands",
+      "is_active": true,
+      "parent": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+      "lft": 2,
+      "level": 1,
+      "tree_id": 1,
+      "rght": 3
+    }
+  },
+  {
+    "model": "product_catalog.category",
+    "pk": "c3d4e5f6-a7b8-4c7d-0e1f-2a3b4c5d6e7f",
+    "fields": {
+      "name": "Laptops",
+      "slug": "laptops",
+      "description": "High-performance laptops for work and gaming",
+      "is_active": true,
+      "parent": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+      "lft": 4,
+      "level": 1,
+      "tree_id": 1,
+      "rght": 7
+    }
+  },
+  {
+    "model": "product_catalog.category",
+    "pk": "d4e5f6a7-b8c9-4d8e-1f2a-3b4c5d6e7f8a",
+    "fields": {
+      "name": "Tablets",
+      "slug": "tablets",
+      "description": "Portable tablets for entertainment and productivity",
+      "is_active": true,
+      "parent": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+      "lft": 8,
+      "level": 1,
+      "tree_id": 1,
+      "rght": 9
+    }
+  },
+  {
+    "model": "product_catalog.category",
+    "pk": "e5f6a7b8-c9d0-4e9f-2a3b-4c5d6e7f8a9b",
+    "fields": {
+      "name": "Audio",
+      "slug": "audio",
+      "description": "Headphones, speakers, and audio equipment",
+      "is_active": true,
+      "parent": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+      "lft": 10,
+      "level": 1,
+      "tree_id": 1,
+      "rght": 13
+    }
+  },
+  {
+    "model": "product_catalog.category",
+    "pk": "f6a7b8c9-d0e1-4f0a-3b4c-5d6e7f8a9b0c",
+    "fields": {
+      "name": "Wireless Headphones",
+      "slug": "wireless-headphones",
+      "description": "Bluetooth and wireless headphones",
+      "is_active": true,
+      "parent": "e5f6a7b8-c9d0-4e9f-2a3b-4c5d6e7f8a9b",
+      "lft": 11,
+      "level": 2,
+      "tree_id": 1,
+      "rght": 12
+    }
+  },
+  {
+    "model": "product_catalog.category",
+    "pk": "a7b8c9d0-e1f2-4a1b-4c5d-6e7f8a9b0c1d",
+    "fields": {
+      "name": "Gaming Laptops",
+      "slug": "gaming-laptops",
+      "description": "High-performance gaming laptops",
+      "is_active": true,
+      "parent": "c3d4e5f6-a7b8-4c7d-0e1f-2a3b4c5d6e7f",
+      "lft": 5,
+      "level": 2,
+      "tree_id": 1,
+      "rght": 6
+    }
+  },
+  {
+    "model": "product_catalog.brand",
+    "pk": "11111111-1111-1111-1111-111111111111",
+    "fields": {
+      "name": "Apple",
+      "slug": "apple",
+      "description": "Premium consumer electronics and software",
+      "is_active": true
+    }
+  },
+  {
+    "model": "product_catalog.brand",
+    "pk": "22222222-2222-2222-2222-222222222222",
+    "fields": {
+      "name": "Samsung",
+      "slug": "samsung",
+      "description": "Leading electronics and technology company",
+      "is_active": true
+    }
+  },
+  {
+    "model": "product_catalog.brand",
+    "pk": "33333333-3333-3333-3333-333333333333",
+    "fields": {
+      "name": "Dell",
+      "slug": "dell",
+      "description": "Computer technology solutions",
+      "is_active": true
+    }
+  },
+  {
+    "model": "product_catalog.brand",
+    "pk": "44444444-4444-4444-4444-444444444444",
+    "fields": {
+      "name": "Sony",
+      "slug": "sony",
+      "description": "Entertainment and electronics innovator",
+      "is_active": true
+    }
+  },
+  {
+    "model": "product_catalog.brand",
+    "pk": "55555555-5555-5555-5555-555555555555",
+    "fields": {
+      "name": "HP",
+      "slug": "hp",
+      "description": "Computing and printing solutions",
+      "is_active": true
+    }
+  },
+  {
+    "model": "product_catalog.brand",
+    "pk": "66666666-6666-6666-6666-666666666666",
+    "fields": {
+      "name": "Lenovo",
+      "slug": "lenovo",
+      "description": "Personal computers and technology solutions",
+      "is_active": true
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p1111111-1111-1111-1111-111111111111",
+    "fields": {
+      "name": "iPhone 15 Pro Max",
+      "slug": "iphone-15-pro-max",
+      "sku": "APL-IP15PM-256-BLK",
+      "description": "The iPhone 15 Pro Max features a stunning titanium design with a 6.7-inch Super Retina XDR display. Powered by the A17 Pro chip, it delivers unprecedented performance for gaming, photography, and productivity. The advanced camera system includes a 48MP main camera with improved low-light performance and 5x optical zoom. Features include Dynamic Island, Always-On display, and all-day battery life.",
+      "short_description": "Premium flagship smartphone with titanium design and A17 Pro chip",
+      "category": "b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e",
+      "brand": "11111111-1111-1111-1111-111111111111",
+      "price": "5499.00",
+      "currency": "GHS",
+      "compare_at_price": "5999.00",
+      "cost_price": "4200.00",
+      "stock_quantity": 45,
+      "low_stock_threshold": 10,
+      "status": "active",
+      "is_featured": true,
+      "is_available": true,
+      "specifications": {
+        "display": "6.7-inch Super Retina XDR",
+        "processor": "A17 Pro chip",
+        "storage": "256GB",
+        "camera": "48MP Main + 12MP Ultra Wide + 12MP Telephoto",
+        "battery": "Up to 29 hours video playback",
+        "color": "Black Titanium",
+        "weight": "221g",
+        "water_resistance": "IP68"
+      },
+      "meta_title": "iPhone 15 Pro Max - Buy Apple's Flagship Smartphone",
+      "meta_description": "Get the iPhone 15 Pro Max with titanium design, A17 Pro chip, and advanced camera system. Free shipping available.",
+      "view_count": 1523
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p2222222-2222-2222-2222-222222222222",
+    "fields": {
+      "name": "Samsung Galaxy S24 Ultra",
+      "slug": "samsung-galaxy-s24-ultra",
+      "sku": "SAM-GS24U-512-GRY",
+      "description": "Experience the pinnacle of Android innovation with the Galaxy S24 Ultra. This powerhouse features a brilliant 6.8-inch Dynamic AMOLED 2X display with anti-reflective coating for outdoor visibility. The Snapdragon 8 Gen 3 processor delivers blazing-fast performance. Capture stunning photos with the 200MP camera and revolutionary Galaxy AI features for photo editing and productivity.",
+      "short_description": "Ultimate Android flagship with 200MP camera and Galaxy AI",
+      "category": "b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e",
+      "brand": "22222222-2222-2222-2222-222222222222",
+      "price": "5299.00",
+      "currency": "GHS",
+      "compare_at_price": "5799.00",
+      "cost_price": "4100.00",
+      "stock_quantity": 38,
+      "low_stock_threshold": 10,
+      "status": "active",
+      "is_featured": true,
+      "is_available": true,
+      "specifications": {
+        "display": "6.8-inch Dynamic AMOLED 2X",
+        "processor": "Snapdragon 8 Gen 3",
+        "storage": "512GB",
+        "ram": "12GB",
+        "camera": "200MP Main + 12MP Ultra Wide + 50MP Telephoto + 10MP Telephoto",
+        "battery": "5000mAh",
+        "color": "Titanium Gray",
+        "s_pen": "Included"
+      },
+      "meta_title": "Samsung Galaxy S24 Ultra - Premium Android Smartphone",
+      "meta_description": "Shop the Galaxy S24 Ultra with 200MP camera, Galaxy AI, and S Pen. Experience the best of Android technology.",
+      "view_count": 1387
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p3333333-3333-3333-3333-333333333333",
+    "fields": {
+      "name": "Dell XPS 15 (2024)",
+      "slug": "dell-xps-15-2024",
+      "sku": "DEL-XPS15-I7-32GB",
+      "description": "The Dell XPS 15 combines power and portability in a stunning design. Featuring a 15.6-inch InfinityEdge display with optional 3.5K OLED touch screen, this laptop is perfect for creative professionals and power users. Equipped with 13th Gen Intel Core i7 processor, NVIDIA GeForce RTX 4050 graphics, and premium build quality. The precision touchpad and backlit keyboard provide exceptional user experience.",
+      "short_description": "Premium laptop for creators with OLED display and RTX graphics",
+      "category": "c3d4e5f6-a7b8-4c7d-0e1f-2a3b4c5d6e7f",
+      "brand": "33333333-3333-3333-3333-333333333333",
+      "price": "8999.00",
+      "currency": "GHS",
+      "compare_at_price": "9999.00",
+      "cost_price": "7200.00",
+      "stock_quantity": 22,
+      "low_stock_threshold": 5,
+      "status": "active",
+      "is_featured": true,
+      "is_available": true,
+      "specifications": {
+        "display": "15.6-inch 3.5K OLED Touch",
+        "processor": "Intel Core i7-13700H",
+        "graphics": "NVIDIA GeForce RTX 4050",
+        "ram": "32GB DDR5",
+        "storage": "1TB NVMe SSD",
+        "battery": "86WHr",
+        "weight": "1.86kg",
+        "ports": "2x Thunderbolt 4, USB-C, SD card reader"
+      },
+      "meta_title": "Dell XPS 15 2024 - Premium Creator Laptop with OLED",
+      "meta_description": "Buy the Dell XPS 15 with OLED display, RTX 4050 graphics, and Intel Core i7. Perfect for content creators.",
+      "view_count": 892
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p4444444-4444-4444-4444-444444444444",
+    "fields": {
+      "name": "Sony WH-1000XM5",
+      "slug": "sony-wh-1000xm5",
+      "sku": "SNY-WH1000XM5-BLK",
+      "description": "Experience industry-leading noise cancellation with the Sony WH-1000XM5. These premium wireless headphones feature an all-new driver unit and eight microphones for unprecedented noise canceling performance. The lightweight design with soft fit leather ensures all-day comfort. Enjoy up to 30 hours of battery life, multipoint connection, and speak-to-chat technology. Premium sound quality with LDAC support delivers exceptional audio fidelity.",
+      "short_description": "Premium noise-canceling headphones with 30-hour battery life",
+      "category": "f6a7b8c9-d0e1-4f0a-3b4c-5d6e7f8a9b0c",
+      "brand": "44444444-4444-4444-4444-444444444444",
+      "price": "1499.00",
+      "currency": "GHS",
+      "compare_at_price": "1799.00",
+      "cost_price": "1100.00",
+      "stock_quantity": 67,
+      "low_stock_threshold": 15,
+      "status": "active",
+      "is_featured": true,
+      "is_available": true,
+      "specifications": {
+        "type": "Over-ear, Wireless",
+        "noise_cancellation": "Industry-leading Active Noise Cancellation",
+        "battery": "30 hours",
+        "charging": "USB-C, Quick charge 3min = 3hrs",
+        "codec": "LDAC, AAC, SBC",
+        "weight": "250g",
+        "color": "Black",
+        "features": "Multipoint connection, Speak-to-chat, Adaptive Sound Control"
+      },
+      "meta_title": "Sony WH-1000XM5 - Best Noise Cancelling Headphones",
+      "meta_description": "Shop Sony WH-1000XM5 wireless headphones with industry-leading noise cancellation and 30-hour battery life.",
+      "view_count": 745
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p5555555-5555-5555-5555-555555555555",
+    "fields": {
+      "name": "iPad Pro 12.9-inch M2",
+      "slug": "ipad-pro-129-m2",
+      "sku": "APL-IPADPM2-256-SLV",
+      "description": "The iPad Pro redefines what's possible with a tablet. Powered by the revolutionary M2 chip, it delivers desktop-class performance in a portable form factor. The stunning 12.9-inch Liquid Retina XDR display with ProMotion technology provides incredible brightness and color accuracy. Compatible with Apple Pencil 2 and Magic Keyboard for ultimate productivity. Perfect for creative professionals, students, and anyone who demands the best.",
+      "short_description": "Professional tablet with M2 chip and Liquid Retina XDR display",
+      "category": "d4e5f6a7-b8c9-4d8e-1f2a-3b4c5d6e7f8a",
+      "brand": "11111111-1111-1111-1111-111111111111",
+      "price": "4799.00",
+      "currency": "GHS",
+      "compare_at_price": null,
+      "cost_price": "3800.00",
+      "stock_quantity": 31,
+      "low_stock_threshold": 8,
+      "status": "active",
+      "is_featured": false,
+      "is_available": true,
+      "specifications": {
+        "display": "12.9-inch Liquid Retina XDR",
+        "processor": "Apple M2 chip",
+        "storage": "256GB",
+        "camera": "12MP Wide + 10MP Ultra Wide",
+        "front_camera": "12MP Ultra Wide with Center Stage",
+        "connectivity": "Wi-Fi 6E, 5G capable",
+        "color": "Silver",
+        "apple_pencil": "Compatible with Apple Pencil 2"
+      },
+      "meta_title": "iPad Pro 12.9-inch with M2 Chip - Apple Tablet",
+      "meta_description": "Get the iPad Pro with M2 chip and stunning XDR display. Perfect for professionals and creatives.",
+      "view_count": 634
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p6666666-6666-6666-6666-666666666666",
+    "fields": {
+      "name": "HP Spectre x360 14",
+      "slug": "hp-spectre-x360-14",
+      "sku": "HP-SPEX360-14-I7",
+      "description": "The HP Spectre x360 14 is a versatile 2-in-1 laptop that combines elegance with performance. The gem-cut design and premium materials create a stunning aesthetic. Featuring Intel Evo platform with 13th Gen Intel Core processors, this convertible laptop delivers exceptional responsiveness and battery life. The 13.5-inch 3:2 OLED touchscreen provides immersive visuals, while the 360-degree hinge allows for multiple usage modes.",
+      "short_description": "Premium 2-in-1 convertible laptop with OLED touchscreen",
+      "category": "c3d4e5f6-a7b8-4c7d-0e1f-2a3b4c5d6e7f",
+      "brand": "55555555-5555-5555-5555-555555555555",
+      "price": "6499.00",
+      "currency": "GHS",
+      "compare_at_price": "7199.00",
+      "cost_price": "5200.00",
+      "stock_quantity": 18,
+      "low_stock_threshold": 5,
+      "status": "active",
+      "is_featured": false,
+      "is_available": true,
+      "specifications": {
+        "display": "13.5-inch 3K2K OLED Touch",
+        "processor": "Intel Core i7-1355U",
+        "ram": "16GB LPDDR4x",
+        "storage": "512GB NVMe SSD",
+        "graphics": "Intel Iris Xe",
+        "battery": "Up to 16 hours",
+        "weight": "1.34kg",
+        "pen": "HP Rechargeable MPP2.0 Tilt Pen included"
+      },
+      "meta_title": "HP Spectre x360 14 - Premium 2-in-1 Convertible Laptop",
+      "meta_description": "Shop the HP Spectre x360 with OLED display and Intel Evo platform. Versatile 2-in-1 design for work and play.",
+      "view_count": 456
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p7777777-7777-7777-7777-777777777777",
+    "fields": {
+      "name": "Lenovo Legion 5 Pro",
+      "slug": "lenovo-legion-5-pro",
+      "sku": "LEN-LEG5P-RTX4070",
+      "description": "Dominate the competition with the Lenovo Legion 5 Pro gaming laptop. Engineered for serious gamers, it features a powerful AMD Ryzen 7 7745HX processor and NVIDIA GeForce RTX 4070 graphics card. The 16-inch WQXGA display with 240Hz refresh rate and 100% sRGB color gamut delivers smooth, vibrant visuals. Advanced cooling system with Legion Coldfront 5.0 ensures optimal performance during intense gaming sessions.",
+      "short_description": "High-performance gaming laptop with RTX 4070 and 240Hz display",
+      "category": "a7b8c9d0-e1f2-4a1b-4c5d-6e7f8a9b0c1d",
+      "brand": "66666666-6666-6666-6666-666666666666",
+      "price": "7299.00",
+      "currency": "GHS",
+      "compare_at_price": "7999.00",
+      "cost_price": "5900.00",
+      "stock_quantity": 8,
+      "low_stock_threshold": 5,
+      "status": "active",
+      "is_featured": true,
+      "is_available": true,
+      "specifications": {
+        "display": "16-inch WQXGA 240Hz",
+        "processor": "AMD Ryzen 7 7745HX",
+        "graphics": "NVIDIA GeForce RTX 4070 8GB",
+        "ram": "32GB DDR5",
+        "storage": "1TB NVMe SSD",
+        "keyboard": "RGB backlit with numeric keypad",
+        "cooling": "Legion Coldfront 5.0",
+        "weight": "2.5kg"
+      },
+      "meta_title": "Lenovo Legion 5 Pro - Gaming Laptop with RTX 4070",
+      "meta_description": "Buy the Lenovo Legion 5 Pro gaming laptop with RTX 4070 graphics and 240Hz display. Maximum gaming performance.",
+      "view_count": 1123
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p8888888-8888-8888-8888-888888888888",
+    "fields": {
+      "name": "Samsung Galaxy Tab S9",
+      "slug": "samsung-galaxy-tab-s9",
+      "sku": "SAM-TABS9-128-BEG",
+      "description": "The Samsung Galaxy Tab S9 is your perfect companion for work and entertainment on the go. Featuring a brilliant 11-inch Dynamic AMOLED 2X display with 120Hz refresh rate, every image comes to life with vibrant colors. The included S Pen transforms your tablet into a creative powerhouse. With IP68 water and dust resistance, powerful Snapdragon 8 Gen 2 processor, and all-day battery life, this tablet is built for your lifestyle.",
+      "short_description": "Premium Android tablet with S Pen and water resistance",
+      "category": "d4e5f6a7-b8c9-4d8e-1f2a-3b4c5d6e7f8a",
+      "brand": "22222222-2222-2222-2222-222222222222",
+      "price": "3299.00",
+      "currency": "GHS",
+      "compare_at_price": "3599.00",
+      "cost_price": "2600.00",
+      "stock_quantity": 42,
+      "low_stock_threshold": 10,
+      "status": "active",
+      "is_featured": false,
+      "is_available": true,
+      "specifications": {
+        "display": "11-inch Dynamic AMOLED 2X 120Hz",
+        "processor": "Snapdragon 8 Gen 2",
+        "ram": "8GB",
+        "storage": "128GB (expandable)",
+        "camera": "13MP + 8MP Ultra Wide",
+        "battery": "8400mAh",
+        "s_pen": "Included",
+        "water_resistance": "IP68",
+        "color": "Beige"
+      },
+      "meta_title": "Samsung Galaxy Tab S9 - Premium Android Tablet with S Pen",
+      "meta_description": "Shop the Galaxy Tab S9 with stunning AMOLED display, S Pen, and water resistance. Perfect for work and play.",
+      "view_count": 523
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "p9999999-9999-9999-9999-999999999999",
+    "fields": {
+      "name": "iPhone 14",
+      "slug": "iphone-14",
+      "sku": "APL-IP14-128-BLU",
+      "description": "The iPhone 14 brings impressive features at a great value. With its 6.1-inch Super Retina XDR display, A15 Bionic chip, and advanced dual-camera system, you get flagship performance without compromise. Key safety features include Crash Detection and Emergency SOS via satellite. All-day battery life keeps you connected throughout your day. Available in beautiful colors with aerospace-grade aluminum design.",
+      "short_description": "Powerful iPhone with advanced camera system and safety features",
+      "category": "b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e",
+      "brand": "11111111-1111-1111-1111-111111111111",
+      "price": "3799.00",
+      "currency": "GHS",
+      "compare_at_price": "4199.00",
+      "cost_price": "3000.00",
+      "stock_quantity": 3,
+      "low_stock_threshold": 5,
+      "status": "active",
+      "is_featured": false,
+      "is_available": true,
+      "specifications": {
+        "display": "6.1-inch Super Retina XDR",
+        "processor": "A15 Bionic chip",
+        "storage": "128GB",
+        "camera": "12MP Main + 12MP Ultra Wide",
+        "video": "4K Cinematic mode",
+        "battery": "Up to 20 hours video playback",
+        "color": "Blue",
+        "water_resistance": "IP68"
+      },
+      "meta_title": "iPhone 14 - Buy Apple's Reliable Smartphone",
+      "meta_description": "Get the iPhone 14 with advanced camera, A15 Bionic chip, and safety features. Great value iPhone.",
+      "view_count": 987
+    }
+  },
+  {
+    "model": "product_catalog.product",
+    "pk": "pa000000-0000-0000-0000-000000000000",
+    "fields": {
+      "name": "Dell Alienware m16 R1",
+      "slug": "dell-alienware-m16-r1",
+      "sku": "DEL-AWM16-RTX4080",
+      "description": "Unleash ultimate gaming power with the Alienware m16 R1. This beast features the latest Intel Core i9-13900HX processor and NVIDIA GeForce RTX 4080 graphics for uncompromising performance. The 16-inch QHD+ display with 240Hz refresh rate and G-SYNC support ensures buttery-smooth gameplay. Advanced AlienFX lighting, premium build quality, and superior thermal management make this the laptop for serious enthusiasts.",
+      "short_description": "Ultimate gaming laptop with RTX 4080 and premium build quality",
+      "category": "a7b8c9d0-e1f2-4a1b-4c5d-6e7f8a9b0c1d",
+      "brand": "33333333-3333-3333-3333-333333333333",
+      "price": "12999.00",
+      "currency": "GHS",
+      "compare_at_price": null,
+      "cost_price": "10500.00",
+      "stock_quantity": 0,
+      "low_stock_threshold": 3,
+      "status": "out_of_stock",
+      "is_featured": false,
+      "is_available": false,
+      "specifications": {
+        "display": "16-inch QHD+ 240Hz G-SYNC",
+        "processor": "Intel Core i9-13900HX",
+        "graphics": "NVIDIA GeForce RTX 4080 12GB",
+        "ram": "32GB DDR5",
+        "storage": "2TB NVMe SSD",
+        "keyboard": "AlienFX RGB per-key",
+        "cooling": "Cryo-Tech cooling technology",
+        "weight": "3.11kg"
+      },
+      "meta_title": "Dell Alienware m16 R1 - Premium Gaming Laptop RTX 4080",
+      "meta_description": "Experience extreme gaming performance with Alienware m16. RTX 4080 graphics and Core i9 processor.",
+      "view_count": 234
+    }
+  }
+]

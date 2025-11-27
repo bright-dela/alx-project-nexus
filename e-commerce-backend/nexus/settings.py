@@ -310,3 +310,7 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
 # Social Authentication
 GOOGLE_OAUTH_CLIENT_ID = config("GOOGLE_OAUTH_CLIENT_ID")
 GOOGLE_OAUTH_CLIENT_SECRET = config("GOOGLE_OAUTH_CLIENT_SECRET")
+
+
+
+AUTH_USER_MODEL = "authentication.User"
