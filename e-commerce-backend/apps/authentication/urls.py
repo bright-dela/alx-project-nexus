@@ -11,7 +11,7 @@ from .views import (
     CurrentUserView,
     LoginHistoryView,
     SecurityClaimsView,
-    SocialAuthView,
+    GoogleAuthView,
 )
 
 app_name = "authentication"
@@ -34,6 +34,7 @@ urlpatterns = [
         PasswordResetConfirmView.as_view(),
         name="password-reset-confirm",
     ),
+
     # User profile
     path("me/", CurrentUserView.as_view(), name="current-user"),
 
@@ -41,6 +42,6 @@ urlpatterns = [
     path("login-history/", LoginHistoryView.as_view(), name="login-history"),
     path("security-claims/", SecurityClaimsView.as_view(), name="security-claims"),
     
-    # Social authentication
-    path("social/", SocialAuthView.as_view(), name="social-auth"),
+    # Google OAuth authentication
+    path("google/", GoogleAuthView.as_view(), name="google-auth"),
 ]

@@ -1,38 +1,63 @@
 from django.conf import settings
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-class SocialAuthProvider:
-    """Handles social authentication with different providers"""
-
-    @classmethod
-    def verify_token(cls, provider, access_token, id_token_str=""):
-        """Verify token and get user info based on provider"""
-
-        if provider == "google":
-            return cls.verify_google_token(id_token_str or access_token)
-
-        else:
-            raise ValueError(f"Unsupported provider: {provider}")
-        
-        
+class GoogleAuthProvider:
+    """Handles Google OAuth authentication"""
 
     @staticmethod
-    def verify_google_token(token):
-        """Verify Google OAuth token"""
+    def verify_token(id_token_str):
+        """
+        Verify Google OAuth token and return user information.
+
+        Args:
+            id_token_str: Google ID token string
+
+        Returns:
+            dict: User information including email, first_name, last_name, provider_id
+
+        Raises:
+            ValueError: If token is invalid or verification fails
+        """
         try:
             # Verify the token with Google
             idinfo = id_token.verify_oauth2_token(
-                token, google_requests.Request(), settings.GOOGLE_OAUTH_CLIENT_ID
+                id_token_str, google_requests.Request(), settings.GOOGLE_OAUTH_CLIENT_ID
             )
 
+            # Ensure the token is for our application
+            if idinfo.get("aud") != settings.GOOGLE_OAUTH_CLIENT_ID:
+                raise ValueError("Token audience mismatch")
+
             # Token is valid, extract user info
-            return {
-                "email": idinfo["email"],
+            user_info = {
+                "email": idinfo.get("email"),
                 "first_name": idinfo.get("given_name", ""),
                 "last_name": idinfo.get("family_name", ""),
-                "provider_id": idinfo["sub"],
+                "provider_id": idinfo.get("sub"),  # Google's unique user ID
+                "email_verified": idinfo.get("email_verified", False),
             }
-        except Exception as e:
+
+            # Validate that we have required fields
+            if not user_info["email"]:
+                raise ValueError("Email not provided by Google")
+
+            if not user_info["provider_id"]:
+                raise ValueError("Provider ID not found in token")
+
+            logger.info(
+                f"Successfully verified Google token for email: {user_info['email']}"
+            )
+
+            return user_info
+
+        except ValueError as e:
+            logger.error(f"Google token verification failed: {str(e)}")
             raise ValueError(f"Invalid Google token: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected error during Google token verification: {str(e)}")
+            raise ValueError(f"Google authentication failed: {str(e)}")

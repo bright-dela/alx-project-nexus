@@ -6,13 +6,11 @@ from .models import User, LoginHistory, SecurityClaim
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
-
     password_confirm = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
         fields = ["email", "password", "password_confirm", "first_name", "last_name"]
-
 
     def validate(self, attrs):
         if attrs["password"] != attrs.pop("password_confirm"):
@@ -22,7 +20,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
-
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -75,8 +72,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
                 {"new_password": "Passwords do not match"}
             )
         return attrs
-
-
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -135,7 +130,18 @@ class SecurityClaimSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class SocialAuthSerializer(serializers.Serializer):
-    provider = serializers.ChoiceField(choices=["google", "facebook", "github"])
-    access_token = serializers.CharField()
-    id_token = serializers.CharField(required=False, allow_blank=True)
+class GoogleAuthSerializer(serializers.Serializer):
+    """
+    Serializer for Google OAuth authentication.
+    Only accepts Google ID tokens.
+    """
+
+    id_token = serializers.CharField(
+        required=True, help_text="Google ID token obtained from Google OAuth flow"
+    )
+
+    def validate_id_token(self, value):
+        """Validate that the ID token is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("ID token cannot be empty")
+        return value.strip()

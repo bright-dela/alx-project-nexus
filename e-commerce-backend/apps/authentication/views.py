@@ -15,7 +15,7 @@ from .serializers import (
     UserSerializer,
     LoginHistorySerializer,
     SecurityClaimSerializer,
-    SocialAuthSerializer,
+    GoogleAuthSerializer,
 )
 from .services import (
     OTPService,
@@ -23,9 +23,11 @@ from .services import (
     LoginTrackingService,
     TokenBlacklistService,
 )
-from .social_auth import SocialAuthProvider
+from .social_auth import GoogleAuthProvider
 
-# Create your views here.
+import logging
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -41,7 +43,6 @@ class UserRegistrationView(APIView):
 
             # Generate and send OTP
             otp = OTPService.create_otp(user.email, purpose="verification")
-
             EmailService.send_verification_email(user, otp)
 
             return Response(
@@ -56,7 +57,6 @@ class UserRegistrationView(APIView):
 
 
 class EmailVerificationView(APIView):
-
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -78,8 +78,7 @@ class EmailVerificationView(APIView):
                     )
                 except User.DoesNotExist:
                     return Response(
-                        {"error": "User not found"}, 
-                        status=status.HTTP_404_NOT_FOUND
+                        {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
                     )
             else:
                 return Response(
@@ -112,13 +111,11 @@ class ResendOTPView(APIView):
                 EmailService.send_verification_email(user, otp)
 
                 return Response(
-                    {"message": "OTP sent successfully"}, 
-                    status=status.HTTP_200_OK
+                    {"message": "OTP sent successfully"}, status=status.HTTP_200_OK
                 )
             except User.DoesNotExist:
                 return Response(
-                    {"error": "User not found"}, 
-                    status=status.HTTP_404_NOT_FOUND
+                    {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -172,10 +169,7 @@ class UserLoginView(APIView):
             try:
                 user = User.objects.get(email=email)
                 LoginTrackingService.record_login_attempt(
-                    user, 
-                    request, 
-                    success=False, 
-                    failure_reason="Invalid credentials"
+                    user, request, success=False, failure_reason="Invalid credentials"
                 )
             except User.DoesNotExist:
                 pass
@@ -252,8 +246,7 @@ class PasswordResetConfirmView(APIView):
                     )
                 except User.DoesNotExist:
                     return Response(
-                        {"error": "User not found"}, 
-                        status=status.HTTP_404_NOT_FOUND
+                        {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
                     )
             else:
                 return Response(
@@ -288,64 +281,95 @@ class SecurityClaimsView(generics.ListAPIView):
         return self.request.user.security_claims.filter(resolved=False)
 
 
-class SocialAuthView(APIView):
+class GoogleAuthView(APIView):
+    """
+    Endpoint for Google OAuth authentication.
+
+    POST /api/auth/google/
+    Body: {
+        "id_token": "google_id_token_string"
+    }
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = SocialAuthSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            provider = serializer.validated_data["provider"]
-            access_token = serializer.validated_data["access_token"]
-            id_token = serializer.validated_data.get("id_token", "")
+        serializer = GoogleAuthSerializer(data=request.data)
 
-            try:
-                user_info = SocialAuthProvider.verify_token(
-                    provider, access_token, id_token
-                )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                # Get or create user
-                user, created = User.objects.get_or_create(
-                    email=user_info["email"],
-                    defaults={
-                        "first_name": user_info.get("first_name", ""),
-                        "last_name": user_info.get("last_name", ""),
-                        "is_verified": True,
-                        "provider": provider,
-                        "provider_id": user_info["provider_id"],
-                    },
-                )
+        id_token_str = serializer.validated_data["id_token"]
 
-                # Update provider info if user already exists
-                if not created and not user.provider:
-                    user.provider = provider
-                    user.provider_id = user_info["provider_id"]
-                    user.is_verified = True
-                    user.save()
+        try:
+            # Verify the Google token and get user info
+            user_info = GoogleAuthProvider.verify_token(id_token_str)
 
-                # Record login
-                LoginTrackingService.record_login_attempt(user, request, success=True)
-
-                # Generate tokens
-                refresh = RefreshToken.for_user(user)
-
+            # Check if email is verified by Google
+            if not user_info.get("email_verified", False):
                 return Response(
-                    {
-                        "message": "Social authentication successful",
-                        "tokens": {
-                            "refresh": str(refresh),
-                            "access": str(refresh.access_token),
-                        },
-                        "user": UserSerializer(user).data,
-                        "is_new_user": created,
-                    },
-                    status=status.HTTP_200_OK,
-                )
-
-            except Exception as e:
-                return Response(
-                    {"error": f"Social authentication failed: {str(e)}"},
+                    {"error": "Email not verified by Google"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # Get or create user
+            user, created = User.objects.get_or_create(
+                email=user_info["email"],
+                defaults={
+                    "first_name": user_info.get("first_name", ""),
+                    "last_name": user_info.get("last_name", ""),
+                    "is_verified": True,  # Google verified the email
+                    "provider": "google",
+                    "provider_id": user_info["provider_id"],
+                },
+            )
+
+            # Update provider info if user already exists but didn't have it
+            if not created:
+                updated = False
+                if not user.provider:
+                    user.provider = "google"
+                    updated = True
+                if not user.provider_id:
+                    user.provider_id = user_info["provider_id"]
+                    updated = True
+                if not user.is_verified:
+                    user.is_verified = True
+                    updated = True
+
+                if updated:
+                    user.save()
+
+            # Record login
+            LoginTrackingService.record_login_attempt(user, request, success=True)
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+
+            logger.info(f"Google authentication successful for user: {user.email}")
+
+            return Response(
+                {
+                    "message": "Google authentication successful",
+                    "tokens": {
+                        "refresh": str(refresh),
+                        "access": str(refresh.access_token),
+                    },
+                    "user": UserSerializer(user).data,
+                    "is_new_user": created,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError as e:
+            logger.error(f"Google authentication failed: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error in Google authentication: {str(e)}")
+            return Response(
+                {"error": "Authentication failed. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
