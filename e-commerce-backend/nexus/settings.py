@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from urllib.parse import urlparse
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
@@ -28,11 +29,27 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="",
-    cast=lambda v: [s.strip() for s in v.split(",") if s.strip()] if v else ["*"],
-)
+# ALLOWED_HOSTS = config(
+#     "ALLOWED_HOSTS",
+#     default="",
+#     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()] if v else ["*"],
+# )
+
+
+# Allow Railway domains
+ALLOWED_HOSTS_ENV = config("ALLOWED_HOSTS", default="")
+if ALLOWED_HOSTS_ENV:
+    # Parse comma-separated hosts
+    ALLOWED_HOSTS = [s.strip() for s in ALLOWED_HOSTS_ENV.split(",") if s.strip()]
+else:
+    ALLOWED_HOSTS = ["*"]  # Development fallback
+
+# Trust Railway proxy headers
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = False  # Railway handles SSL
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -87,16 +104,44 @@ WSGI_APPLICATION = "nexus.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("POSTGRES_DB"),
-        "USER": config("POSTGRES_USER"),
-        "PASSWORD": config("POSTGRES_PASSWORD"),
-        'HOST': config('POSTGRES_HOST', default='db'),
-        "PORT": 5432,
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": config("POSTGRES_DB"),
+#         "USER": config("POSTGRES_USER"),
+#         "PASSWORD": config("POSTGRES_PASSWORD"),
+#         'HOST': config('POSTGRES_HOST', default='db'),
+#         "PORT": 5432,
+#     }
+# }
+
+
+
+# Railway provides DATABASE_URL, parse it if available
+if 'DATABASE_URL' in os.environ:
+    db_url = urlparse(os.environ['DATABASE_URL'])
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_url.path[1:],  # Remove leading slash
+            'USER': db_url.username,
+            'PASSWORD': db_url.password,
+            'HOST': db_url.hostname,
+            'PORT': db_url.port or 5432,
+        }
     }
-}
+else:
+    # Fallback to individual environment variables
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("POSTGRES_DB"),
+            "USER": config("POSTGRES_USER"),
+            "PASSWORD": config("POSTGRES_PASSWORD"),
+            "HOST": config("POSTGRES_HOST", default="localhost"),
+            "PORT": 5432,
+        }
+    }
 
 
 # Password validation
@@ -133,11 +178,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+# STATIC_URL = "static/"
 
-MEDIA_URL = "/media/"
+# MEDIA_URL = "/media/"
 
-MEDIA_ROOT = BASE_DIR / "media/"
+# MEDIA_ROOT = BASE_DIR / "media/"
+
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+
+# Media files
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -149,33 +202,108 @@ CATEGORY_TREE_CACHE_TIMEOUT = config("CATEGORY_TREE_CACHE_TIMEOUT", default=4320
 PRODUCT_LIST_CACHE_TIMEOUT = config("PRODUCT_LIST_CACHE_TIMEOUT", default=300, cast=int)
 PRODUCT_DETAIL_CACHE_TIMEOUT = config("PRODUCT_DETAIL_CACHE_TIMEOUT", default= 600, cast=int)
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/1",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         },
+#     },
+#     "product_cache": {  # cache for product
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/2",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         },
+#         "KEY_PREFIX": "catalog",
+#         "TIMEOUT": 3600,
+#     },
+#     "auth_cache": {  # cache for authentication
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/3",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         },
+#         "KEY_PREFIX": "auth",
+#         "TIMEOUT": 600,  # 10 minutes for OTP
+#     },
+# }
+
+
+# Railway provides REDIS_URL, parse it for caching
+redis_url = os.environ.get('REDIS_URL')
+celery_broker = os.environ.get('CELERY_BROKER_URL')
+
+if redis_url:
+    # Use Railway's Redis URL
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"{redis_url}/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
         },
-    },
-    "product_cache": {  # cache for product
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/2",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        "product_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"{redis_url}/2",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+            "KEY_PREFIX": "catalog",
+            "TIMEOUT": 3600,
         },
-        "KEY_PREFIX": "catalog",
-        "TIMEOUT": 3600,
-    },
-    "auth_cache": {  # cache for authentication
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/3",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        "auth_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"{redis_url}/3",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+            "KEY_PREFIX": "auth",
+            "TIMEOUT": 600,
         },
-        "KEY_PREFIX": "auth",
-        "TIMEOUT": 600,  # 10 minutes for OTP
-    },
-}
+    }
+    
+    # Set Celery broker/backend if not explicitly provided
+    if not celery_broker:
+        CELERY_BROKER_URL = redis_url
+        CELERY_RESULT_BACKEND = redis_url
+else:
+    # Fallback to docker-compose style
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://redis:6379/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        },
+        "product_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://redis:6379/2",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+            "KEY_PREFIX": "catalog",
+            "TIMEOUT": 3600,
+        },
+        "auth_cache": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://redis:6379/3",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+            "KEY_PREFIX": "auth",
+            "TIMEOUT": 600,
+        },
+    }
+    
+    if not celery_broker:
+        CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+        CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
+
+
 
 
 # Celery Configuration
