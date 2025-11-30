@@ -18,7 +18,7 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-# Do NOT expose ports on Railway
-# EXPOSE 8000
+ENV PORT=8080
+EXPOSE $PORT
 
 CMD ["sh", "-c", "gunicorn nexus.wsgi:application --bind 0.0.0.0:${PORT}"]
