@@ -2,7 +2,7 @@ services:
   web:
     build: .
     container_name: django_app
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn nexus.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
       - ./data:/app/data

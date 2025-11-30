@@ -1,0 +1,157 @@
+name: Deploy Nexus to Render
+
+# This workflow triggers when you push to the 'deploy' branch
+
+on:
+  push:
+    branches:
+      - deploy
+  
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Job 1: Run all tests before deployment
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    # create temporary service containers for testing
+
+    services:
+      # PostgreSQL database for running tests
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      # Redis for cache testing
+      redis:
+        image: redis:8.4-rc1-alpine3.22
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      # Step 1: Get your code from GitHub
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python with caching for faster builds
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'requirements.txt'
+
+      # Step 3: Install all Python dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Run database migrations in test environment
+      - name: Run migrations
+        env:
+          DJANGO_SECRET_KEY: 'test-secret-key-for-ci-cd-pipeline'
+          DEBUG: 'False'
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_HOST: localhost
+          JWT_SECRET_KEY: 'test-jwt-secret-key'
+          CELERY_BROKER_URL: 'redis://localhost:6379/0'
+          CELERY_RESULT_BACKEND: 'redis://localhost:6379/0'
+          EMAIL_HOST: 'smtp.gmail.com'
+          EMAIL_PORT: '587'
+          EMAIL_HOST_USER: 'test@example.com'
+          EMAIL_HOST_PASSWORD: 'test-password'
+          DEFAULT_FROM_EMAIL: 'test@example.com'
+          GOOGLE_OAUTH_CLIENT_ID: 'test-client-id'
+          GOOGLE_OAUTH_CLIENT_SECRET: 'test-client-secret'
+        run: |
+          python manage.py migrate --settings=nexus.test_settings
+
+      # Step 5: Run the complete test suite
+      # If any test fails, deployment will stop here
+      - name: Run tests
+        env:
+          DJANGO_SECRET_KEY: 'test-secret-key-for-ci-cd-pipeline'
+          DEBUG: 'False'
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_HOST: localhost
+          JWT_SECRET_KEY: 'test-jwt-secret-key'
+          CELERY_BROKER_URL: 'redis://localhost:6379/0'
+          CELERY_RESULT_BACKEND: 'redis://localhost:6379/0'
+          EMAIL_HOST: 'smtp.gmail.com'
+          EMAIL_PORT: '587'
+          EMAIL_HOST_USER: 'test@example.com'
+          EMAIL_HOST_PASSWORD: 'test-password'
+          DEFAULT_FROM_EMAIL: 'test@example.com'
+          GOOGLE_OAUTH_CLIENT_ID: 'test-client-id'
+          GOOGLE_OAUTH_CLIENT_SECRET: 'test-client-secret'
+        run: |
+          python manage.py test apps.authentication apps.product_catalog --settings=nexus.test_settings --verbosity=2
+
+      # Step 6: Show test results
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "Tests completed. Check the logs above for results."
+
+  # Job 2: Deploy to Render
+  # This only runs if all tests pass
+  deploy:
+    name: Deploy to Render
+    needs: test  
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Trigger Render deployment using their deploy hook stored as a secret in GitHub
+      - name: Trigger Render Deployment
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Error: RENDER_DEPLOY_HOOK_URL secret not set"
+            exit 1
+          fi
+          
+          echo "Triggering Render deployment..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK_URL")
+          
+          if [ $response -eq 200 ] || [ $response -eq 201 ]; then
+            echo "✅ Deployment triggered successfully!"
+            echo "Check your Render dashboard for deployment progress."
+          else
+            echo "❌ Deployment trigger failed with status code: $response"
+            exit 1
+          fi
+
+      # Notify about deployment status
+      - name: Deployment Status
+        if: success()
+        run: |
+          echo "🚀 Deployment to Render has been triggered!"
+          echo "Your application will be live shortly at your Render URL."
+          echo "Monitor the deployment at: https://dashboard.render.com"

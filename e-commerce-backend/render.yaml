@@ -1,0 +1,209 @@
+# Render Blueprint Configuration
+
+# Database service - PostgreSQL
+databases:
+  - name: nexus-postgres
+    databaseName: nexus_db
+    user: nexus_user
+
+    # Use free plan
+    plan: free
+
+    # Specifies PostgreSQL version
+    ipAllowList: []
+
+# Redis service for caching
+services:
+  - type: redis
+    name: nexus-redis
+
+    # Free tier Redis with 25MB storage
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  # Main web service - Django application
+  - type: web
+    name: nexus-backend
+    runtime: docker
+
+    # Render will use Dockerfile to build the app
+    dockerfilePath: ./Dockerfile
+
+    # Use 'deploy' branch for production
+    branch: deploy
+
+    # Health check endpoint to verify app is running
+    healthCheckPath: /admin/
+
+    # Environment variables for the Django app
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true  # Render auto-generates a secure key
+      
+      - key: DEBUG
+        value: False
+      
+      - key: ALLOWED_HOSTS
+        # Render will automatically set this to app's URL
+        sync: false
+      
+      # Database connection from the PostgreSQL service above
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: nexus-postgres
+          property: database
+      
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: nexus-postgres
+          property: user
+      
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: nexus-postgres
+          property: password
+      
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: nexus-postgres
+          property: host
+      
+      # Redis connection from the Redis service above
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: nexus-redis
+          property: connectionString
+      
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: nexus-redis
+          property: connectionString
+      
+      # JWT secret key
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      
+      # Cache timeouts (in seconds)
+      - key: CATEGORY_TREE_CACHE_TIMEOUT
+        value: 43200  # 12 hours
+      
+      - key: PRODUCT_LIST_CACHE_TIMEOUT
+        value: 300  # 5 minutes
+      
+      - key: PRODUCT_DETAIL_CACHE_TIMEOUT
+        value: 600  # 10 minutes
+      
+
+      # add them as secret environment variables in Render dashboard
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      
+      - key: EMAIL_PORT
+        value: 587
+      
+      - key: EMAIL_USE_TLS
+        value: True
+      
+      # Add as secrets in Render dashboard
+      - key: EMAIL_HOST_USER
+        sync: false
+      
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      
+      # Google OAuth - add as secrets in Render dashboard
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+    
+    # Build command to prepare the app
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py collectstatic --no-input
+      python manage.py migrate
+    
+    # Command to start the server
+    # Using gunicorn for production instead of Django's dev server
+    startCommand: gunicorn nexus.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+
+  # Background worker service for Celery
+  - type: worker
+    name: nexus-celery-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    branch: deploy
+    
+    # Same environment variables as web service
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        sync: false  # Will use the same value as web service
+      
+      - key: DEBUG
+        value: False
+      
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: nexus-postgres
+          property: database
+      
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: nexus-postgres
+          property: user
+      
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: nexus-postgres
+          property: password
+      
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: nexus-postgres
+          property: host
+      
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: nexus-redis
+          property: connectionString
+      
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: nexus-redis
+          property: connectionString
+      
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      
+      - key: EMAIL_PORT
+        value: 587
+      
+      - key: EMAIL_USE_TLS
+        value: True
+      
+      - key: EMAIL_HOST_USER
+        sync: false
+      
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+    
+    # Build command for worker (same as web)
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    
+    # Start Celery worker
+    startCommand: celery -A nexus worker --loglevel=info
