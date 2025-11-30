@@ -22,10 +22,11 @@ RUN pip install -r requirements.txt
 # Copy project
 COPY . . 
 
-RUN python manage.py collectstatic --noinput
 
 # Expose port (not needed for worker but kept for consistency)
 EXPOSE 8000
 
 # Run Celery worker
-CMD ["celery", "-A", "nexus", "worker", "--loglevel=info"]
+# CMD ["celery", "-A", "nexus", "worker", "--loglevel=info"]
+
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && gunicorn nexus.wsgi:application --bind 0.0.0.0:8000"]
