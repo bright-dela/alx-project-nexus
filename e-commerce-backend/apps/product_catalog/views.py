@@ -5,7 +5,7 @@ from rest_framework.exceptions import NotFound
 from django_filters.rest_framework import DjangoFilterBackend
 
 from django.conf import settings
-from django.db.models import F  
+from django.db.models import F
 
 from .models import Category, Brand, Product, ProductReview
 
@@ -119,10 +119,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated(), IsStaffOrReadOnly()]
         else:
             return [permissions.AllowAny()]
-        
 
     def list(self, request, *args, **kwargs):
-        
+
         key = product_list_key(request)
         cached = product_cache.get(key)
 
@@ -151,8 +150,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         logger.info(f"Product list cached successfully with key: {key}")
 
         return Response(response_data, status=status.HTTP_200_OK)
-
-    
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -191,7 +188,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
 
         product_cache.set(key, data, timeout=settings.PRODUCT_DETAIL_CACHE_TIMEOUT)
-        
+
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -204,14 +201,35 @@ class ProductReviewViewSet(
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        # Get the product id and filter using it
-        product_id = self.kwargs.get("product_pk")
+        """
+        Get reviews for a specific product.
+        The nested router passes the parent product lookup value as 'product_slug'
+        because the ProductViewSet uses lookup_field = 'slug'.
+        """
+        # Since ProductViewSet uses lookup_field='slug', the nested router
+        # will pass the slug value as 'product_slug' parameter
+        product_slug = self.kwargs.get("product_slug")
 
-        return (
-            ProductReview.objects.filter(product_id=product_id, is_approved=True)
-            .select_related("user", "product")
-            .order_by("-created_at")
-        )
+        if not product_slug:
+            # Fallback: try other possible parameter names
+            product_slug = self.kwargs.get("product_pk")
+
+        if not product_slug:
+            logger.error(f"No product identifier found in kwargs: {self.kwargs}")
+            return ProductReview.objects.none()
+
+        try:
+            # Look up product by slug
+            product = Product.objects.get(slug=product_slug)
+
+            return (
+                ProductReview.objects.filter(product=product, is_approved=True)
+                .select_related("user", "product")
+                .order_by("-created_at")
+            )
+        except Product.DoesNotExist:
+            logger.error(f"Product not found with slug: {product_slug}")
+            return ProductReview.objects.none()
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -226,12 +244,21 @@ class ProductReviewViewSet(
             return [permissions.AllowAny()]
 
     def perform_create(self, serializer):
-        # Get the user and product
+        """
+        Create a review for the product identified by slug in the URL.
+        """
         user = self.request.user
-        product_id = self.kwargs.get("product_pk")
+        product_slug = self.kwargs.get("product_slug")
+
+        if not product_slug:
+            # Fallback: try other possible parameter names
+            product_slug = self.kwargs.get("product_pk")
+
+        if not product_slug:
+            raise NotFound("Product identifier not found in URL")
 
         try:
-            product = Product.objects.get(pk=product_id)
+            product = Product.objects.get(slug=product_slug)
         except Product.DoesNotExist:
             raise NotFound("Product not found")
 

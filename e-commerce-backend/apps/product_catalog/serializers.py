@@ -215,15 +215,15 @@ class ProductReviewCreateSerializer(serializers.ModelSerializer):
             )
         return value
     
+    
     def create(self, validated_data):
-        # get user and product from the request object
-        request = self.context.get("request")
+        user = validated_data.pop("user")
+        product = validated_data.pop("product")
 
-        user = request.user
-        product = self.context.get("product")
-        
         return ProductReview.objects.create(
-            product=product,
             user=user,
+            product=product,
+            is_approved=False,
             **validated_data
         )
+
