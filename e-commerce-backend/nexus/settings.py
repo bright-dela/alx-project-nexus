@@ -117,33 +117,42 @@ WSGI_APPLICATION = "nexus.wsgi.application"
 #     }
 # }
 
+import dj_database_url
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        config("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=False  # Railway internal Postgres does NOT use SSL
+    )
+}
 
 
-# Railway provides DATABASE_URL, parse it if available
-if 'DATABASE_URL' in os.environ:
-    db_url = urlparse(os.environ['DATABASE_URL'])
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db_url.path[1:],  # Remove leading slash
-            'USER': db_url.username,
-            'PASSWORD': db_url.password,
-            'HOST': db_url.hostname,
-            'PORT': db_url.port or 5432,
-        }
-    }
-else:
-    # Fallback to individual environment variables
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("POSTGRES_DB"),
-            "USER": config("POSTGRES_USER"),
-            "PASSWORD": config("POSTGRES_PASSWORD"),
-            "HOST": config("POSTGRES_HOST", default="localhost"),
-            "PORT": 5432,
-        }
-    }
+# # Railway provides DATABASE_URL, parse it if available
+# if 'DATABASE_URL' in os.environ:
+#     db_url = urlparse(os.environ['DATABASE_URL'])
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': db_url.path[1:],  # Remove leading slash
+#             'USER': db_url.username,
+#             'PASSWORD': db_url.password,
+#             'HOST': db_url.hostname,
+#             'PORT': db_url.port or 5432,
+#         }
+#     }
+# else:
+#     # Fallback to individual environment variables
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": config("POSTGRES_DB"),
+#             "USER": config("POSTGRES_USER"),
+#             "PASSWORD": config("POSTGRES_PASSWORD"),
+#             "HOST": config("POSTGRES_HOST", default="localhost"),
+#             "PORT": 5432,
+#         }
+#     }
 
 
 # Password validation

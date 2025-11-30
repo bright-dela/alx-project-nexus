@@ -12,6 +12,7 @@ click-plugins==1.1.1.2
 click-repl==0.3.0
 cloudinary==1.44.1
 colorama==0.4.6
+dj-database-url==3.0.1
 Django==5.2.8
 django-cloudinary-storage==0.3.0
 django-filter==25.2
