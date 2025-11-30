@@ -40,7 +40,8 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS_ENV = config("ALLOWED_HOSTS", default="")
 if ALLOWED_HOSTS_ENV:
     # Parse comma-separated hosts
-    ALLOWED_HOSTS = [s.strip() for s in ALLOWED_HOSTS_ENV.split(",") if s.strip()]
+    ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(",")
+
 else:
     ALLOWED_HOSTS = ["*"]  # Development fallback
 
@@ -74,6 +75,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -188,7 +190,13 @@ USE_TZ = True
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+
 # Media files
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+CLOUDINARY_URL = config("CLOUDINARY_URL")
+
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 

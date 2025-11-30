@@ -1,10 +1,13 @@
-FROM python:3.12-slim
+FROM python:3.12-slim 
 
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Set work directory
 WORKDIR /app
 
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
@@ -16,12 +19,11 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-COPY . .
+# Copy project
+COPY . . 
 
-RUN python manage.py collectstatic --noinput
-
-
-# Hard-coded internal port for Railway
+# Expose port (not needed for worker but kept for consistency)
 EXPOSE 8000
 
-CMD ["gunicorn", "nexus.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Run Celery worker
+CMD ["celery", "-A", "nexus", "worker", "--loglevel=info"]
