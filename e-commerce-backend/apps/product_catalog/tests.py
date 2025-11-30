@@ -389,10 +389,14 @@ class ProductReviewTestCase(TestCase):
             is_approved=False,
         )
 
+
         response = self.client.get(self.review_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         # The API should only return approved reviews
         # Check that we got exactly 1 review and it's the approved one
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["title"], "Approved")
+        # check the length of results not the entire paginated response (always returns 4)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["title"], "Approved")
+

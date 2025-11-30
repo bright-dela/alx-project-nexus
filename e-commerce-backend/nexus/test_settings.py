@@ -4,7 +4,8 @@ This file should be used when running tests to avoid email sending
 and use in-memory task execution.
 """
 
-from nexus.settings import *
+from .settings import *
+
 
 # Test database configuration - use SQLite for faster tests
 DATABASES = {
@@ -80,3 +81,5 @@ LOGGING = {
         },
     },
 }
+
+

@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, status, permissions, filters, mixins
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
@@ -192,6 +194,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
 
+
 class ProductReviewViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -199,67 +202,49 @@ class ProductReviewViewSet(
 ):
     serializer_class = ProductReviewSerializer
     permission_classes = [permissions.AllowAny]
+    queryset = ProductReview.objects.all()
+
+    def get_product(self):
+        slug = (
+            self.kwargs.get("product_slug") or
+            self.kwargs.get("product_pk") or
+            self.kwargs.get("product_product_slug")
+        )
+
+        # print("KWARGS:", self.kwargs)
+
+        if not slug:
+            raise NotFound("Product slug not found")
+
+        return get_object_or_404(Product, slug=slug)
 
     def get_queryset(self):
-        """
-        Get reviews for a specific product.
-        The nested router passes the parent product lookup value as 'product_slug'
-        because the ProductViewSet uses lookup_field = 'slug'.
-        """
-        # Since ProductViewSet uses lookup_field='slug', the nested router
-        # will pass the slug value as 'product_slug' parameter
-        product_slug = self.kwargs.get("product_slug")
+        product = self.get_product()
 
-        if not product_slug:
-            # Fallback: try other possible parameter names
-            product_slug = self.kwargs.get("product_pk")
-
-        if not product_slug:
-            logger.error(f"No product identifier found in kwargs: {self.kwargs}")
-            return ProductReview.objects.none()
-
-        try:
-            # Look up product by slug
-            product = Product.objects.get(slug=product_slug)
-
-            return (
-                ProductReview.objects.filter(product=product, is_approved=True)
-                .select_related("user", "product")
-                .order_by("-created_at")
-            )
-        except Product.DoesNotExist:
-            logger.error(f"Product not found with slug: {product_slug}")
-            return ProductReview.objects.none()
+        return ProductReview.objects.filter(
+            product=product,
+            is_approved=True
+        ).select_related("user", "product")
 
     def get_serializer_class(self):
-        if self.action == "create":
-            return ProductReviewCreateSerializer
-        else:
-            return ProductReviewSerializer
+        return (
+            ProductReviewCreateSerializer
+            if self.action == "create"
+            else ProductReviewSerializer
+        )
 
     def get_permissions(self):
-        if self.action == "create":
-            return [permissions.IsAuthenticated()]
-        else:
-            return [permissions.AllowAny()]
+        return (
+            [permissions.IsAuthenticated()]
+            if self.action == "create"
+            else [permissions.AllowAny()]
+        )
 
     def perform_create(self, serializer):
-        """
-        Create a review for the product identified by slug in the URL.
-        """
+        product = self.get_product()
         user = self.request.user
-        product_slug = self.kwargs.get("product_slug")
 
-        if not product_slug:
-            # Fallback: try other possible parameter names
-            product_slug = self.kwargs.get("product_pk")
+        if ProductReview.objects.filter(product=product, user=user).exists():
+            raise ValidationError("You have already reviewed this product.")
 
-        if not product_slug:
-            raise NotFound("Product identifier not found in URL")
-
-        try:
-            product = Product.objects.get(slug=product_slug)
-        except Product.DoesNotExist:
-            raise NotFound("Product not found")
-
-        serializer.save(user=user, product=product)
+        serializer.save(product=product, user=user)
