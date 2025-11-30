@@ -28,7 +28,8 @@ services:
     runtime: docker
 
     # Render will use Dockerfile to build the app
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./e-commerce-backend/Dockerfile
+    dockerContext: ./e-commerce-backend
 
     # Use 'deploy' branch for production
     branch: deploy
@@ -96,15 +97,14 @@ services:
       - key: PRODUCT_DETAIL_CACHE_TIMEOUT
         value: 600  # 10 minutes
       
-
-      # add them as secret environment variables in Render dashboard
+      # Email configuration
       - key: EMAIL_HOST
         value: smtp.gmail.com
       
       - key: EMAIL_PORT
-        value: 587
+        value: 465
       
-      - key: EMAIL_USE_TLS
+      - key: EMAIL_USE_SSL
         value: True
       
       # Add as secrets in Render dashboard
@@ -126,6 +126,7 @@ services:
     
     # Build command to prepare the app
     buildCommand: |
+      cd e-commerce-backend
       pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py collectstatic --no-input
@@ -133,13 +134,14 @@ services:
     
     # Command to start the server
     # Using gunicorn for production instead of Django's dev server
-    startCommand: gunicorn nexus.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    startCommand: cd e-commerce-backend && gunicorn nexus.wsgi:application --bind 0.0.0.0:$PORT --workers 2
 
   # Background worker service for Celery
   - type: worker
     name: nexus-celery-worker
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./e-commerce-backend/Dockerfile
+    dockerContext: ./e-commerce-backend
     branch: deploy
     
     # Same environment variables as web service
@@ -182,13 +184,16 @@ services:
           name: nexus-redis
           property: connectionString
       
+      - key: JWT_SECRET_KEY
+        sync: false
+      
       - key: EMAIL_HOST
         value: smtp.gmail.com
       
       - key: EMAIL_PORT
-        value: 587
+        value: 465
       
-      - key: EMAIL_USE_TLS
+      - key: EMAIL_USE_SSL
         value: True
       
       - key: EMAIL_HOST_USER
@@ -199,11 +204,18 @@ services:
       
       - key: DEFAULT_FROM_EMAIL
         sync: false
+      
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
     
     # Build command for worker (same as web)
     buildCommand: |
+      cd e-commerce-backend
       pip install --upgrade pip
       pip install -r requirements.txt
     
     # Start Celery worker
-    startCommand: celery -A nexus worker --loglevel=info
+    startCommand: cd e-commerce-backend && celery -A nexus worker --loglevel=info
