@@ -12,19 +12,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 COPY . .
 
-# RUN python manage.py collectstatic --noinput
+# Collect static
+RUN python manage.py collectstatic --noinput
 
-
-# Hard-coded internal port for Railway
 EXPOSE 8000
 
-# CMD ["gunicorn", "nexus.wsgi:application", "--bind", "0.0.0.0:8000"]
-
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && gunicorn nexus.wsgi:application --bind 0.0.0.0:8000"]
-
+# Run gunicorn 
+CMD ["gunicorn", "nexus.wsgi:application", "--bind", "0.0.0.0:8000"]
