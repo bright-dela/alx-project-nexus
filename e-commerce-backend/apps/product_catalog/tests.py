@@ -10,9 +10,11 @@ from apps.product_catalog.models import (
     ProductReview,
 )
 from apps.product_catalog.cache import product_cache, brand_list_key
+
 from decimal import Decimal
 
 User = get_user_model()
+
 
 
 class CategoryTestCase(TestCase):
@@ -21,11 +23,15 @@ class CategoryTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.category_url = "/api/catalog/categories/"
+
         # Clear cache before each test
         product_cache.clear()
 
+
+
     def test_create_root_category(self):
         """Test creating a root category"""
+
         category = Category.objects.create(
             name="Electronics", description="Electronic devices"
         )
@@ -35,31 +41,45 @@ class CategoryTestCase(TestCase):
         self.assertIsNone(category.parent)
         self.assertTrue(category.is_active)
 
+
     def test_create_child_category(self):
         """Test creating a child category with parent"""
+
         parent = Category.objects.create(name="Electronics")
         child = Category.objects.create(name="Smartphones", parent=parent)
 
         self.assertEqual(child.parent, parent)
         self.assertIn(child, parent.get_children())
 
+
     def test_category_list_api(self):
-        """Test category list endpoint returns hierarchy"""
+        """Test category list endpoint returns hierarchy with standardized format"""
+
         parent = Category.objects.create(name="Electronics")
         child = Category.objects.create(name="Smartphones", parent=parent)
 
         response = self.client.get(self.category_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["name"], "Electronics")
-        self.assertEqual(len(response.data[0]["children"]), 1)
+        self.assertIn("message", response.data)
+        self.assertIn("data", response.data)
+        self.assertIn("categories", response.data["data"])
+
+        categories = response.data["data"]["categories"]
+        self.assertEqual(len(categories), 1)
+        self.assertEqual(categories[0]["name"], "Electronics")
+        self.assertEqual(len(categories[0]["children"]), 1)
+
+
 
     def test_category_slug_generation(self):
         """Test slug is automatically generated from name"""
+
         category = Category.objects.create(name="Test Category Name")
 
         self.assertEqual(category.slug, "test-category-name")
+
+
 
 
 class BrandTestCase(TestCase):
@@ -68,8 +88,10 @@ class BrandTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.brand_url = "/api/catalog/brands/"
+
         # Clear cache before each test
         product_cache.clear()
+
 
     def test_create_brand(self):
         """Test creating a brand"""
@@ -79,18 +101,26 @@ class BrandTestCase(TestCase):
         self.assertEqual(brand.slug, "apple")
         self.assertTrue(brand.is_active)
 
+
     def test_brand_list_api(self):
-        """Test brand list endpoint"""
+        """Test brand list endpoint with standardized format"""
+
         Brand.objects.create(name="Apple")
         Brand.objects.create(name="Samsung")
 
         response = self.client.get(self.brand_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertIn("message", response.data)
+        self.assertIn("data", response.data)
+        self.assertIn("brands", response.data["data"])
+        self.assertEqual(len(response.data["data"]["brands"]), 2)
+
+
 
     def test_inactive_brands_not_listed(self):
         """Test inactive brands are not returned in API"""
+
         product_cache.delete(brand_list_key())
 
         Brand.objects.create(name="Active Brand", is_active=True)
@@ -98,8 +128,11 @@ class BrandTestCase(TestCase):
 
         response = self.client.get(self.brand_url)
 
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["name"], "Active Brand")
+        brands = response.data["data"]["brands"]
+        self.assertEqual(len(brands), 1)
+        self.assertEqual(brands[0]["name"], "Active Brand")
+
+
 
 
 class ProductTestCase(TestCase):
@@ -108,6 +141,7 @@ class ProductTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.product_url = "/api/catalog/products/"
+
         # Clear cache before each test
         product_cache.clear()
 
@@ -137,8 +171,10 @@ class ProductTestCase(TestCase):
         self.assertEqual(product.category, self.category)
         self.assertEqual(product.brand, self.brand)
 
+
     def test_product_in_stock_property(self):
         """Test is_in_stock property"""
+
         product = Product.objects.create(**self.product_data)
 
         self.assertTrue(product.is_in_stock)
@@ -148,8 +184,11 @@ class ProductTestCase(TestCase):
 
         self.assertFalse(product.is_in_stock)
 
+
+
     def test_product_discount_percentage(self):
         """Test discount percentage calculation"""
+
         product_data = self.product_data.copy()
         product_data["price"] = Decimal("799.99")
         product_data["compare_at_price"] = Decimal("999.99")
@@ -158,29 +197,39 @@ class ProductTestCase(TestCase):
 
         self.assertEqual(product.discount_percentage, 20)
 
+
     def test_product_list_api(self):
-        """Test product list endpoint"""
+        """Test product list endpoint with standardized format"""
+
         Product.objects.create(**self.product_data)
 
         response = self.client.get(self.product_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("results", response.data)
-        self.assertEqual(len(response.data["results"]), 1)
+        self.assertIn("message", response.data)
+        self.assertIn("data", response.data)
+        self.assertIn("results", response.data["data"])
+        self.assertEqual(len(response.data["data"]["results"]), 1)
+
 
     def test_product_detail_api(self):
-        """Test product detail endpoint"""
+        """Test product detail endpoint with standardized format"""
+
         product = Product.objects.create(**self.product_data)
         detail_url = f"{self.product_url}{product.slug}/"
 
         response = self.client.get(detail_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["name"], "iPhone 15")
-        self.assertEqual(response.data["sku"], "APL-IP15-128")
+        self.assertIn("message", response.data)
+        self.assertIn("data", response.data)
+        self.assertEqual(response.data["data"]["name"], "iPhone 15")
+        self.assertEqual(response.data["data"]["sku"], "APL-IP15-128")
+
 
     def test_product_view_count_increments(self):
         """Test view count increments on detail view"""
+
         product = Product.objects.create(**self.product_data)
         detail_url = f"{self.product_url}{product.slug}/"
         initial_count = product.view_count
@@ -225,36 +274,51 @@ class ProductFilterTestCase(TestCase):
             status="active",
         )
 
+
     def test_filter_by_min_price(self):
-        """Test filtering products by minimum price"""
+        """Test filtering products by minimum price with standardized format"""
+
         response = self.client.get(f"{self.product_url}?min_price=500")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 1)
-        self.assertEqual(response.data["results"][0]["name"], "Expensive Product")
+        self.assertIn("data", response.data)
+        results = response.data["data"]["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["name"], "Expensive Product")
+
 
     def test_filter_by_max_price(self):
-        """Test filtering products by maximum price"""
+        """Test filtering products by maximum price with standardized format"""
+
         response = self.client.get(f"{self.product_url}?max_price=500")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 1)
-        self.assertEqual(response.data["results"][0]["name"], "Cheap Product")
+        results = response.data["data"]["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["name"], "Cheap Product")
+
 
     def test_filter_by_category(self):
-        """Test filtering products by category"""
+        """Test filtering products by category with standardized format"""
+
         response = self.client.get(f"{self.product_url}?category={self.category.id}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 2)
+        results = response.data["data"]["results"]
+        self.assertEqual(len(results), 2)
+
+
 
     def test_search_products(self):
-        """Test searching products by name"""
+        """Test searching products by name with standardized format"""
+
         response = self.client.get(f"{self.product_url}?search=Cheap")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 1)
-        self.assertEqual(response.data["results"][0]["name"], "Cheap Product")
+        results = response.data["data"]["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["name"], "Cheap Product")
+
 
 
 class ProductImageTestCase(TestCase):
@@ -275,17 +339,23 @@ class ProductImageTestCase(TestCase):
 
     def test_primary_image_uniqueness(self):
         """Test only one image can be primary per product"""
+
         image1 = ProductImage.objects.create(
-            product=self.product, image="test1.jpg", is_primary=True
+            product=self.product, 
+            image="test1.jpg", 
+            is_primary=True
         )
 
         image2 = ProductImage.objects.create(
-            product=self.product, image="test2.jpg", is_primary=True
+            product=self.product, 
+            image="test2.jpg", 
+            is_primary=True
         )
 
         image1.refresh_from_db()
         self.assertFalse(image1.is_primary)
         self.assertTrue(image2.is_primary)
+
 
 
 class ProductReviewTestCase(TestCase):
@@ -295,7 +365,9 @@ class ProductReviewTestCase(TestCase):
         self.client = APIClient()
 
         self.user = User.objects.create_user(
-            email="reviewer@example.com", password="TestPass123!", is_verified=True
+            email="reviewer@example.com", 
+            password="TestPass123!", 
+            is_verified=True
         )
 
         self.category = Category.objects.create(name="Electronics")
@@ -311,12 +383,12 @@ class ProductReviewTestCase(TestCase):
             status="active",
         )
 
-        # The nested router uses slug as the lookup field for products
-        # So we need to use the product's slug in the URL
         self.review_url = f"/api/catalog/products/{self.product.slug}/reviews/"
 
+
     def test_create_review_authenticated(self):
-        """Test authenticated user can create review"""
+        """Test authenticated user can create review with standardized format"""
+        
         self.client.force_authenticate(user=self.user)
 
         response = self.client.post(
@@ -329,12 +401,16 @@ class ProductReviewTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("message", response.data)
+        self.assertIn("data", response.data)
         self.assertTrue(
             ProductReview.objects.filter(product=self.product, user=self.user).exists()
         )
 
+
     def test_create_review_unauthenticated(self):
         """Test unauthenticated user cannot create review"""
+
         response = self.client.post(
             self.review_url,
             {
@@ -346,8 +422,11 @@ class ProductReviewTestCase(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+
+
     def test_duplicate_review_prevention(self):
-        """Test user cannot review same product twice"""
+        """Test user cannot review same product twice with standardized format"""
+
         ProductReview.objects.create(
             product=self.product,
             user=self.user,
@@ -364,9 +443,13 @@ class ProductReviewTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"], "duplicate_review")
+
 
     def test_list_approved_reviews_only(self):
-        """Test API returns only approved reviews"""
+        """Test API returns only approved reviews with standardized format"""
+        
         ProductReview.objects.create(
             product=self.product,
             user=self.user,
@@ -389,14 +472,12 @@ class ProductReviewTestCase(TestCase):
             is_approved=False,
         )
 
-
         response = self.client.get(self.review_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("data", response.data)
+        self.assertIn("reviews", response.data["data"])
 
-        # The API should only return approved reviews
-        # Check that we got exactly 1 review and it's the approved one
-        # check the length of results not the entire paginated response (always returns 4)
-        self.assertEqual(len(response.data["results"]), 1)
-        self.assertEqual(response.data["results"][0]["title"], "Approved")
-
+        reviews = response.data["data"]["reviews"]
+        self.assertEqual(len(reviews), 1)
+        self.assertEqual(reviews[0]["title"], "Approved")

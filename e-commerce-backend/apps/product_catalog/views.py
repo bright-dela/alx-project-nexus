@@ -1,7 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, status, permissions, filters, mixins
-from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -24,6 +22,7 @@ from .serializers import (
 from .filters import ProductFilter
 from .permissions import IsStaffOrReadOnly
 from .pagination import StandardProductsPagination
+
 from .cache import (
     product_cache,
     product_list_key,
@@ -32,9 +31,17 @@ from .cache import (
     brand_list_key,
 )
 
+from .response_utils import (
+    success_response,
+    error_response,
+    validation_error_response,
+    not_found_response,
+)
+
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -54,18 +61,43 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
             logger.info(
                 f"Category tree retrieved from cache successfully with key: {key}"
             )
-
-            return Response(cached, status=status.HTTP_200_OK)
+            # Return cached data with standardized format
+            return success_response(
+                message="Categories retrieved successfully",
+                data={"categories": cached, "count": len(cached)},
+                metadata={"cached": True}
+            )
 
         serializer = self.get_serializer(self.get_queryset(), many=True)
+
         data = serializer.data
+
         product_cache.set(
-            key=key, value=data, timeout=settings.CATEGORY_TREE_CACHE_TIMEOUT
+            key=key, value=data, 
+            timeout=settings.CATEGORY_TREE_CACHE_TIMEOUT
         )
 
         logger.info(f"Category tree cached successfully with key: {key}")
 
-        return Response(data, status=status.HTTP_200_OK)
+        return success_response(
+            message="Categories retrieved successfully",
+            data={"categories": data, "count": len(data)},
+            metadata={"cached": False}
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+
+            return success_response(
+                message="Category retrieved successfully",
+                data=serializer.data
+            )
+        
+        except Category.DoesNotExist:
+            return not_found_response("Category not found")
+
 
 
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
@@ -79,13 +111,40 @@ class BrandViewSet(viewsets.ReadOnlyModelViewSet):
 
         if cached:
             logger.info(f"Brand list retrieved from cache successfully with key: {key}")
-            return Response(cached, status=status.HTTP_200_OK)
+
+            return success_response(
+                message="Brands retrieved successfully",
+                data={"brands": cached, "count": len(cached)},
+                metadata={"cached": True}
+            )
 
         serializer = self.get_serializer(self.get_queryset(), many=True)
+
         data = serializer.data
+
         product_cache.set(key, data, timeout=60 * 60)
+
         logger.info(f"Brand list cached successfully with key: {key}")
-        return Response(data, status=status.HTTP_200_OK)
+        
+        return success_response(
+            message="Brands retrieved successfully",
+            data={"brands": data, "count": len(data)},
+            metadata={"cached": False}
+        )
+
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+
+            return success_response(
+                message="Brand retrieved successfully",
+                data=serializer.data
+            )
+        
+        except Brand.DoesNotExist:
+            return not_found_response("Brand not found")
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -123,15 +182,17 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
 
     def list(self, request, *args, **kwargs):
-
         key = product_list_key(request)
         cached = product_cache.get(key)
 
         if cached:
-            logger.info(
-                f"Product list retrieved from cache successfully with key: {key}"
+            logger.info(f"Product list retrieved from cache successfully with key: {key}")
+            # Cached data already has pagination structure
+            return success_response(
+                message="Products retrieved successfully",
+                data=cached,
+                metadata={"cached": True}
             )
-            return Response(cached, status=status.HTTP_200_OK)
 
         # Get the base queryset and apply filters on them
         queryset = self.filter_queryset(self.get_queryset())
@@ -142,24 +203,43 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(page, many=True)
 
         # Build a paginated style response
-        response_data = self.get_paginated_response(serializer.data).data
+        paginated_response = self.get_paginated_response(serializer.data)
+        
+        # Extract pagination data
+        response_data = {
+            "results": serializer.data,
+            "count": paginated_response.data.get("count"),
+            "next": paginated_response.data.get("next"),
+            "previous": paginated_response.data.get("previous"),
+        }
 
         # Cache the response with appropriate timeout
         product_cache.set(
-            key=key, value=response_data, timeout=settings.PRODUCT_LIST_CACHE_TIMEOUT
+            key=key, 
+            value=response_data, 
+            timeout=settings.PRODUCT_LIST_CACHE_TIMEOUT
         )
 
         logger.info(f"Product list cached successfully with key: {key}")
 
-        return Response(response_data, status=status.HTTP_200_OK)
+        return success_response(
+            message="Products retrieved successfully",
+            data=response_data,
+            metadata={"cached": False}
+        )
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+
+        except Product.DoesNotExist:
+            return not_found_response("Product not found")
+
         key = product_detail_key(instance.id)
         cached = product_cache.get(key)
 
         if cached:
-            # Atomically increment view count even when serving from cache
+            # Increment view count even when serving from cache
             try:
                 Product.objects.filter(pk=instance.pk).update(
                     view_count=F("view_count") + 1
@@ -171,12 +251,17 @@ class ProductViewSet(viewsets.ModelViewSet):
                 logger.warning(
                     f"Failed to increment view count for product {instance.pk}: {str(e)}"
                 )
-            return Response(cached)
+            
+            return success_response(
+                message="Product retrieved successfully",
+                data=cached,
+                metadata={"cached": True}
+            )
 
         serializer = self.get_serializer(instance)
         data = serializer.data
 
-        # Atomically increment view count when generating fresh response
+        # Increment view count when generating fresh response
         try:
             Product.objects.filter(pk=instance.pk).update(
                 view_count=F("view_count") + 1
@@ -191,8 +276,58 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         product_cache.set(key, data, timeout=settings.PRODUCT_DETAIL_CACHE_TIMEOUT)
 
-        return Response(data, status=status.HTTP_200_OK)
+        return success_response(
+            message="Product retrieved successfully",
+            data=data,
+            metadata={"cached": False}
+        )
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return validation_error_response(serializer.errors)
+
+        self.perform_create(serializer)
+        
+        return success_response(
+            message="Product created successfully",
+            data=serializer.data,
+            status_code=status.HTTP_201_CREATED
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        
+        try:
+            instance = self.get_object()
+        except Product.DoesNotExist:
+            return not_found_response("Product not found")
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        
+        if not serializer.is_valid():
+            return validation_error_response(serializer.errors)
+
+        self.perform_update(serializer)
+
+        return success_response(
+            message="Product updated successfully",
+            data=serializer.data
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+        except Product.DoesNotExist:
+            return not_found_response("Product not found")
+
+        self.perform_destroy(instance)
+        
+        return success_response(
+            message="Product deleted successfully",
+            data={"id": str(instance.id)}
+        )
 
 
 class ProductReviewViewSet(
@@ -203,6 +338,7 @@ class ProductReviewViewSet(
     serializer_class = ProductReviewSerializer
     permission_classes = [permissions.AllowAny]
     queryset = ProductReview.objects.all()
+    pagination_class = StandardProductsPagination
 
     def get_product(self):
         slug = (
@@ -211,7 +347,7 @@ class ProductReviewViewSet(
             self.kwargs.get("product_product_slug")
         )
 
-        # print("KWARGS:", self.kwargs)
+        # print(slug)
 
         if not slug:
             raise NotFound("Product slug not found")
@@ -240,11 +376,55 @@ class ProductReviewViewSet(
             else [permissions.AllowAny()]
         )
 
-    def perform_create(self, serializer):
-        product = self.get_product()
-        user = self.request.user
+    def list(self, request, *args, **kwargs):
+        try:
+            product = self.get_product()
+        except Product.DoesNotExist:
+            return not_found_response("Product not found")
 
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+
+        serializer = self.get_serializer(page, many=True)
+        paginated_response = self.get_paginated_response(serializer.data)
+
+        response_data = {
+            "reviews": serializer.data,
+            "count": paginated_response.data.get("count"),
+            "next": paginated_response.data.get("next"),
+            "previous": paginated_response.data.get("previous"),
+        }
+
+        return success_response(
+            message="Product reviews retrieved successfully",
+            data=response_data
+        )
+
+    def create(self, request, *args, **kwargs):
+        try:
+            product = self.get_product()
+        except Product.DoesNotExist:
+            return not_found_response("Product not found")
+
+        user = request.user
+
+        # Check if user already reviewed this product
         if ProductReview.objects.filter(product=product, user=user).exists():
-            raise ValidationError("You have already reviewed this product.")
+            return error_response(
+                error_type="duplicate_review",
+                message="You have already reviewed this product",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return validation_error_response(serializer.errors)
 
         serializer.save(product=product, user=user)
+
+        return success_response(
+            message="Review submitted successfully. It will be visible after approval.",
+            data=serializer.data,
+            status_code=status.HTTP_201_CREATED
+        )
