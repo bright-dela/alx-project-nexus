@@ -22,6 +22,8 @@ RUN pip install -r requirements.txt
 # Copy project
 COPY . . 
 
+RUN python manage.py collectstatic --noinput
+
 # Expose port (not needed for worker but kept for consistency)
 EXPOSE 8000
 
