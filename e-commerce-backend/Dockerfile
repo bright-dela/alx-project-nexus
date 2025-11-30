@@ -23,4 +23,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Start server with dynamic Railway port
-CMD ["sh", "-c", "gunicorn nexus.wsgi:application --bind 0.0.0.0:${PORT}"]
+CMD ["sh", "-c", "gunicorn e-commerce-backend.nexus.wsgi:application --bind 0.0.0.0:${PORT}"]
