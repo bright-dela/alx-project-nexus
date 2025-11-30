@@ -123,24 +123,12 @@ services:
       
       - key: GOOGLE_OAUTH_CLIENT_SECRET
         sync: false
-    
-    # Build command to prepare the app
-    buildCommand: |
-      cd e-commerce-backend
-      pip install --upgrade pip
-      pip install -r requirements.txt
-      python manage.py collectstatic --no-input
-      python manage.py migrate
-    
-    # Command to start the server
-    # Using gunicorn for production instead of Django's dev server
-    startCommand: cd e-commerce-backend && gunicorn nexus.wsgi:application --bind 0.0.0.0:$PORT --workers 2
 
   # Background worker service for Celery
   - type: worker
     name: nexus-celery-worker
     runtime: docker
-    dockerfilePath: ./e-commerce-backend/Dockerfile
+    dockerfilePath: ./e-commerce-backend/Dockerfile.celery
     dockerContext: ./e-commerce-backend
     branch: deploy
     
@@ -210,12 +198,3 @@ services:
       
       - key: GOOGLE_OAUTH_CLIENT_SECRET
         sync: false
-    
-    # Build command for worker (same as web)
-    buildCommand: |
-      cd e-commerce-backend
-      pip install --upgrade pip
-      pip install -r requirements.txt
-    
-    # Start Celery worker
-    startCommand: cd e-commerce-backend && celery -A nexus worker --loglevel=info
