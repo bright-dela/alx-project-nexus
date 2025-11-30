@@ -1,9 +1,13 @@
 from django.conf import settings
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+
+
 import logging
 
 logger = logging.getLogger(__name__)
+
+
 
 
 class GoogleAuthProvider:
@@ -23,6 +27,7 @@ class GoogleAuthProvider:
         Raises:
             ValueError: If token is invalid or verification fails
         """
+
         try:
             # Check if Google OAuth is properly configured
             if (
@@ -30,20 +35,6 @@ class GoogleAuthProvider:
                 or not settings.GOOGLE_OAUTH_CLIENT_ID
             ):
                 raise ValueError("Google OAuth is not properly configured")
-
-            # Skip actual verification in test mode
-            if settings.GOOGLE_OAUTH_CLIENT_ID == "test-client-id":
-                logger.warning(
-                    "Using test mode for Google OAuth - skipping actual verification"
-                )
-                # Return mock data for testing
-                return {
-                    "email": "test@example.com",
-                    "first_name": "Test",
-                    "last_name": "User",
-                    "provider_id": "test-google-id-123",
-                    "email_verified": True,
-                }
 
             # Verify the token with Google
             idinfo = id_token.verify_oauth2_token(
@@ -79,6 +70,7 @@ class GoogleAuthProvider:
         except ValueError as e:
             logger.error(f"Google token verification failed: {str(e)}")
             raise ValueError(f"Invalid Google token: {str(e)}")
+        
         except Exception as e:
             logger.error(f"Unexpected error during Google token verification: {str(e)}")
             raise ValueError(f"Google authentication failed: {str(e)}")
