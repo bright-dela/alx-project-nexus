@@ -18,7 +18,7 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-ENV PORT=8080
-EXPOSE $PORT
+# Hard-coded internal port for Railway
+EXPOSE 8000
 
-CMD ["sh", "-c", "gunicorn nexus.wsgi:application --bind 0.0.0.0:${PORT}"]
+CMD ["gunicorn", "nexus.wsgi:application", "--bind", "0.0.0.0:8000"]
