@@ -10,20 +10,23 @@ from nexus.settings import *
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",  # In-memory database for speed
+        "NAME": ":memory:",
     }
 }
 
-# Use dummy cache backend for testing to avoid Redis client issues
+# Use locmem cache backend for testing - better than dummy for actual cache testing
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "default-cache",
     },
     "product_cache": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "product-cache",
     },
     "auth_cache": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "auth-cache",
     },
 }
 
@@ -42,10 +45,19 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-# Logging configuration for tests - suppress cache warnings
+# Set dummy Google OAuth credentials for testing
+GOOGLE_OAUTH_CLIENT_ID = "test-client-id"
+GOOGLE_OAUTH_CLIENT_SECRET = "test-client-secret"
+
+# Reduce cache timeouts for faster tests
+CATEGORY_TREE_CACHE_TIMEOUT = 60
+PRODUCT_LIST_CACHE_TIMEOUT = 30
+PRODUCT_DETAIL_CACHE_TIMEOUT = 30
+
+# Logging configuration for tests - reduce noise
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": False,
+    "disable_existing_loggers": True,
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
@@ -53,10 +65,15 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "ERROR",  # Only show errors, suppress warnings
+        "level": "ERROR",
     },
     "loggers": {
-        "apps.product_catalog": {
+        "django": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "apps": {
             "handlers": ["console"],
             "level": "ERROR",
             "propagate": False,
