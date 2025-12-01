@@ -100,29 +100,29 @@ if "DATABASE_URL" in os.environ:
             },
         }
     }
-elif all(
-    key in os.environ
-    for key in ["POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"]
-):
-    # Local development with environment variables
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ["POSTGRES_DB"],
-            "USER": os.environ["POSTGRES_USER"],
-            "PASSWORD": os.environ["POSTGRES_PASSWORD"],
-            "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-            "PORT": 5432,
-        }
-    }
-else:
-    # Fallback to SQLite for local development
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+# elif all(
+#     key in os.environ
+#     for key in ["POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"]
+# ):
+#     # Local development with environment variables
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": os.environ["POSTGRES_DB"],
+#             "USER": os.environ["POSTGRES_USER"],
+#             "PASSWORD": os.environ["POSTGRES_PASSWORD"],
+#             "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+#             "PORT": 5432,
+#         }
+#     }
+# else:
+#     # Fallback to SQLite for local development
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.sqlite3",
+#             "NAME": BASE_DIR / "db.sqlite3",
+#         }
+#     }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
