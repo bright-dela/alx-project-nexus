@@ -5,399 +5,386 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus API - E-commerce Backend</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @keyframes blob {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        .card-hover {
+          transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+          transform: translateY(-8px);
+        }
+    </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
     
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { ShoppingCart, Zap, Shield, Database, Clock, TrendingUp, Code, ExternalLink, Package, Star, Github, BookOpen, Check, Sparkles } = window.lucide;
+    <!-- Animated Background -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    </div>
 
-        // Your React component code here
-        const NexusAPILanding = () => {
-          const [products, setProducts] = useState([]);
-          const [loading, setLoading] = useState(true);
-          const [error, setError] = useState(null);
-          const [stats, setStats] = useState({ totalProducts: 0, categories: 0, brands: 0 });
+    <!-- Navigation -->
+    <nav class="relative z-10 container mx-auto px-6 py-6 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">✨</span>
+            <span class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                Nexus API
+            </span>
+        </div>
+        <div class="flex space-x-4">
+            <a href="/swagger/" class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                <span>📚</span>
+                <span>Docs</span>
+            </a>
+            <a href="/admin/" class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 transition-colors">
+                <span>🔐</span>
+                <span>Admin</span>
+            </a>
+        </div>
+    </nav>
 
-          // Get the API base URL dynamically
-          const API_BASE_URL = window.location.origin;
+    <!-- Hero Section -->
+    <section class="relative container mx-auto px-6 py-24 text-center">
+        <div class="relative z-10">
+            <div class="inline-block mb-6 px-4 py-2 rounded-full bg-purple-500/20 border border-purple-500/30">
+                <span class="text-purple-300 text-sm font-semibold">Production-Ready E-Commerce API</span>
+            </div>
+            
+            <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+                Build Your Store
+                <br />
+                <span class="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    In Minutes, Not Months
+                </span>
+            </h1>
+            
+            <p class="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
+                A modern e-commerce backend built with Django. Complete with products, 
+                categories, authentication, and real-time caching. Ready to power your next big idea.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="/swagger/" 
+                   class="px-8 py-4 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 transition-all transform hover:scale-105 font-semibold flex items-center space-x-2">
+                    <span>💻</span>
+                    <span>Explore API</span>
+                    <span>→</span>
+                </a>
+                <a href="#products"
+                   class="px-8 py-4 rounded-lg bg-white/10 hover:bg-white/20 transition-colors font-semibold flex items-center space-x-2">
+                    <span>📦</span>
+                    <span>See Live Demo</span>
+                </a>
+            </div>
 
-          useEffect(() => {
-            const fetchProducts = async () => {
-              try {
-                setLoading(true);
+            <!-- Stats -->
+            <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                    <div class="text-4xl font-bold text-cyan-400 mb-2" id="product-count">0</div>
+                    <div class="text-gray-300">Products Available</div>
+                </div>
+                <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                    <div class="text-4xl font-bold text-purple-400 mb-2" id="category-count">0</div>
+                    <div class="text-gray-300">Categories</div>
+                </div>
+                <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                    <div class="text-4xl font-bold text-pink-400 mb-2" id="brand-count">0</div>
+                    <div class="text-gray-300">Brands</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Products Section -->
+    <section id="products" class="relative container mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                Live Product Feed
+            </h2>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                Real products fetched directly from the API. This is your backend in action, 
+                serving data in real-time with Redis caching for blazing-fast performance.
+            </p>
+        </div>
+
+        <div id="products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Loading skeleton -->
+            <div class="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 animate-pulse">
+                <div class="aspect-square bg-white/10 rounded-lg mb-4"></div>
+                <div class="h-4 bg-white/10 rounded mb-2"></div>
+                <div class="h-4 bg-white/10 rounded w-2/3"></div>
+            </div>
+            <div class="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 animate-pulse">
+                <div class="aspect-square bg-white/10 rounded-lg mb-4"></div>
+                <div class="h-4 bg-white/10 rounded mb-2"></div>
+                <div class="h-4 bg-white/10 rounded w-2/3"></div>
+            </div>
+            <div class="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 animate-pulse">
+                <div class="aspect-square bg-white/10 rounded-lg mb-4"></div>
+                <div class="h-4 bg-white/10 rounded mb-2"></div>
+                <div class="h-4 bg-white/10 rounded w-2/3"></div>
+            </div>
+            <div class="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 animate-pulse">
+                <div class="aspect-square bg-white/10 rounded-lg mb-4"></div>
+                <div class="h-4 bg-white/10 rounded mb-2"></div>
+                <div class="h-4 bg-white/10 rounded w-2/3"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="relative container mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                Powerful Features Out of the Box
+            </h2>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                Everything you need to launch a production-ready e-commerce platform
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Feature Cards -->
+            <div class="card-hover p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 group">
+                <div class="inline-block p-4 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 mb-6 group-hover:scale-110 transition-transform">
+                    <span class="text-4xl">🔐</span>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Secure Authentication</h3>
+                <p class="text-gray-300 leading-relaxed">Modern authentication with JWT tokens, OTP verification, and Google OAuth integration.</p>
+            </div>
+
+            <div class="card-hover p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 group">
+                <div class="inline-block p-4 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 mb-6 group-hover:scale-110 transition-transform">
+                    <span class="text-4xl">⚡</span>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Redis Caching</h3>
+                <p class="text-gray-300 leading-relaxed">Lightning-fast response times with intelligent caching. Your API stays performant under load.</p>
+            </div>
+
+            <div class="card-hover p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 group">
+                <div class="inline-block p-4 rounded-lg bg-gradient-to-br from-green-500 to-teal-500 mb-6 group-hover:scale-110 transition-transform">
+                    <span class="text-4xl">💾</span>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">PostgreSQL Backend</h3>
+                <p class="text-gray-300 leading-relaxed">Rock-solid data storage with ACID compliance. Your data is safe and queryable at scale.</p>
+            </div>
+
+            <div class="card-hover p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 group">
+                <div class="inline-block p-4 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 mb-6 group-hover:scale-110 transition-transform">
+                    <span class="text-4xl">⏰</span>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Async Tasks</h3>
+                <p class="text-gray-300 leading-relaxed">Celery-powered background processing for emails, notifications, and heavy computations.</p>
+            </div>
+
+            <div class="card-hover p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 group">
+                <div class="inline-block p-4 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 mb-6 group-hover:scale-110 transition-transform">
+                    <span class="text-4xl">📊</span>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Advanced Filtering</h3>
+                <p class="text-gray-300 leading-relaxed">Powerful query capabilities with filtering, search, and sorting across all resources.</p>
+            </div>
+
+            <div class="card-hover p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 group">
+                <div class="inline-block p-4 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 mb-6 group-hover:scale-110 transition-transform">
+                    <span class="text-4xl">⭐</span>
+                </div>
+                <h3 class="text-2xl font-semibold mb-3">Review System</h3>
+                <p class="text-gray-300 leading-relaxed">Built-in product reviews with ratings, verification status, and moderation tools.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section class="relative container mx-auto px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                Built With Modern Tools
+            </h2>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                Production-tested technologies that scale
+            </p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <div class="px-6 py-4 rounded-lg border bg-green-500/20 border-green-500/30 text-green-300 text-center font-semibold hover:scale-105 transition-transform">
+                Django 5.2
+            </div>
+            <div class="px-6 py-4 rounded-lg border bg-blue-500/20 border-blue-500/30 text-blue-300 text-center font-semibold hover:scale-105 transition-transform">
+                PostgreSQL
+            </div>
+            <div class="px-6 py-4 rounded-lg border bg-red-500/20 border-red-500/30 text-red-300 text-center font-semibold hover:scale-105 transition-transform">
+                Redis
+            </div>
+            <div class="px-6 py-4 rounded-lg border bg-green-500/20 border-green-500/30 text-green-300 text-center font-semibold hover:scale-105 transition-transform">
+                Celery
+            </div>
+            <div class="px-6 py-4 rounded-lg border bg-purple-500/20 border-purple-500/30 text-purple-300 text-center font-semibold hover:scale-105 transition-transform">
+                JWT Auth
+            </div>
+            <div class="px-6 py-4 rounded-lg border bg-cyan-500/20 border-cyan-500/30 text-cyan-300 text-center font-semibold hover:scale-105 transition-transform">
+                REST API
+            </div>
+            <div class="px-6 py-4 rounded-lg border bg-blue-500/20 border-blue-500/30 text-blue-300 text-center font-semibold hover:scale-105 transition-transform">
+                Docker
+            </div>
+            <div class="px-6 py-4 rounded-lg border bg-orange-500/20 border-orange-500/30 text-orange-300 text-center font-semibold hover:scale-105 transition-transform">
+                Swagger
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="relative container mx-auto px-6 py-24">
+        <div class="relative rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 p-12 text-center overflow-hidden">
+            <div class="relative z-10">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    Ready to Build Something Amazing?
+                </h2>
+                <p class="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
+                    Dive into the documentation and start building your e-commerce platform today
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/swagger/" 
+                       class="px-8 py-4 rounded-lg bg-white text-purple-600 hover:bg-gray-100 transition-colors font-semibold flex items-center justify-center space-x-2">
+                        <span>📚 View API Docs</span>
+                    </a>
+                    <a href="/admin/"
+                       class="px-8 py-4 rounded-lg bg-black/20 hover:bg-black/30 transition-colors font-semibold flex items-center justify-center space-x-2">
+                        <span>🔐 Admin Panel</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="container mx-auto px-6 py-12 border-t border-white/10">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                <span class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                    Nexus API
+                </span>
+            </div>
+            <div class="text-gray-400 text-sm">
+                Built with Django, PostgreSQL, Redis & ❤️
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript to fetch and display products -->
+    <script>
+        const API_BASE_URL = window.location.origin;
+
+        // Fetch and display products
+        async function fetchProducts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/catalog/products/?page_size=8`);
+                const data = await response.json();
                 
-                const productsResponse = await fetch(`${API_BASE_URL}/api/catalog/products/?page_size=8`);
+                const products = data.data?.results || [];
+                const container = document.getElementById('products-container');
                 
-                if (!productsResponse.ok) {
-                  throw new Error('Failed to fetch products');
+                if (products.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center p-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                            <span class="text-6xl mb-4 block">📦</span>
+                            <p class="text-gray-300 mb-2">No products found</p>
+                            <p class="text-gray-400 text-sm">Add some products to your database to see them here</p>
+                        </div>
+                    `;
+                    return;
                 }
                 
-                const productsData = await productsResponse.json();
-                setProducts(productsData.data?.results || []);
-                setStats(prev => ({ ...prev, totalProducts: productsData.data?.count || 0 }));
+                container.innerHTML = products.map(product => `
+                    <div class="card-hover rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                        <div class="relative aspect-square bg-gradient-to-br from-purple-500/20 to-cyan-500/20 overflow-hidden">
+                            ${product.primary_image ? 
+                                `<img src="${product.primary_image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">` :
+                                `<div class="w-full h-full flex items-center justify-center"><span class="text-6xl">📦</span></div>`
+                            }
+                            ${product.discount_percentage > 0 ? 
+                                `<div class="absolute top-4 right-4 px-3 py-1 rounded-full bg-pink-500 text-white text-sm font-bold">-${product.discount_percentage}%</div>` : 
+                                ''
+                            }
+                            ${!product.is_in_stock ? 
+                                `<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="text-white font-semibold">Out of Stock</span></div>` : 
+                                ''
+                            }
+                        </div>
+                        <div class="p-6">
+                            ${product.brand ? `<p class="text-sm text-cyan-400 mb-1">${product.brand.name}</p>` : ''}
+                            <h3 class="text-lg font-semibold mb-2 line-clamp-2 group-hover:text-cyan-400 transition-colors">
+                                ${product.name}
+                            </h3>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-baseline space-x-2">
+                                    <span class="text-2xl font-bold text-cyan-400">
+                                        ${product.currency} ${parseFloat(product.price).toFixed(2)}
+                                    </span>
+                                    ${product.compare_at_price ? 
+                                        `<span class="text-sm text-gray-400 line-through">
+                                            ${product.currency} ${parseFloat(product.compare_at_price).toFixed(2)}
+                                        </span>` : 
+                                        ''
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
                 
-                try {
-                  const [categoriesRes, brandsRes] = await Promise.all([
+                // Update stats
+                document.getElementById('product-count').textContent = data.data?.count || 0;
+                
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                document.getElementById('products-container').innerHTML = `
+                    <div class="col-span-full text-center p-12 rounded-xl bg-red-500/10 border border-red-500/30">
+                        <p class="text-red-300 mb-4">Unable to connect to API: ${error.message}</p>
+                        <p class="text-gray-400 text-sm">Make sure your Django server is running</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Fetch stats
+        async function fetchStats() {
+            try {
+                const [categoriesRes, brandsRes] = await Promise.all([
                     fetch(`${API_BASE_URL}/api/catalog/categories/`),
                     fetch(`${API_BASE_URL}/api/catalog/brands/`)
-                  ]);
-                  
-                  if (categoriesRes.ok && brandsRes.ok) {
-                    const categoriesData = await categoriesRes.json();
-                    const brandsData = await brandsRes.json();
-                    setStats(prev => ({
-                      ...prev,
-                      categories: categoriesData.data?.categories?.length || 0,
-                      brands: brandsData.data?.brands?.length || 0
-                    }));
-                  }
-                } catch (err) {
-                  console.log('Stats fetch failed, continuing with product display');
-                }
+                ]);
                 
-                setError(null);
-              } catch (err) {
-                console.error('Error fetching data:', err);
-                setError(err.message);
-              } finally {
-                setLoading(false);
-              }
-            };
+                const categoriesData = await categoriesRes.json();
+                const brandsData = await brandsRes.json();
+                
+                document.getElementById('category-count').textContent = categoriesData.data?.categories?.length || 0;
+                document.getElementById('brand-count').textContent = brandsData.data?.brands?.length || 0;
+            } catch (error) {
+                console.log('Stats fetch failed:', error);
+            }
+        }
 
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', () => {
             fetchProducts();
-          }, []);
-
-          const GradientBackground = () => (
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-              <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-            </div>
-          );
-
-          const FeatureCard = ({ icon, title, description, color }) => (
-            <div className="card-hover p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 group">
-              <div className={`inline-block p-4 rounded-lg bg-gradient-to-br ${color} mb-6 group-hover:scale-110 transition-transform`}>
-                {icon}
-              </div>
-              <h3 className="text-2xl font-semibold mb-3">{title}</h3>
-              <p className="text-gray-300 leading-relaxed">{description}</p>
-            </div>
-          );
-
-          const TechBadge = ({ name, color }) => (
-            <div className={`px-6 py-4 rounded-lg border ${color} text-center font-semibold hover:scale-105 transition-transform`}>
-              {name}
-            </div>
-          );
-
-          return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
-              <style>{`
-                @keyframes blob {
-                  0%, 100% { transform: translate(0, 0) scale(1); }
-                  33% { transform: translate(30px, -50px) scale(1.1); }
-                  66% { transform: translate(-20px, 20px) scale(0.9); }
-                }
-                .animate-blob {
-                  animation: blob 7s infinite;
-                }
-                .animation-delay-2000 {
-                  animation-delay: 2s;
-                }
-                .animation-delay-4000 {
-                  animation-delay: 4s;
-                }
-                .card-hover {
-                  transition: all 0.3s ease;
-                }
-                .card-hover:hover {
-                  transform: translateY(-8px);
-                }
-              `}</style>
-
-              {/* Navigation */}
-              <nav className="relative z-10 container mx-auto px-6 py-6 flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <svg className="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
-                  </svg>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                    Nexus API
-                  </span>
-                </div>
-                <div className="flex space-x-4">
-                  <a href={`${API_BASE_URL}/swagger/`} target="_blank" rel="noopener noreferrer" 
-                     className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                    <span>📚 Docs</span>
-                  </a>
-                  <a href={`${API_BASE_URL}/admin/`} target="_blank" rel="noopener noreferrer"
-                     className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 transition-colors">
-                    <span>🔐 Admin</span>
-                  </a>
-                </div>
-              </nav>
-
-              {/* Hero Section */}
-              <section className="relative container mx-auto px-6 py-24 text-center">
-                <GradientBackground />
-                
-                <div className="relative z-10">
-                  <div className="inline-block mb-6 px-4 py-2 rounded-full bg-purple-500/20 border border-purple-500/30">
-                    <span className="text-purple-300 text-sm font-semibold">Production-Ready E-Commerce API</span>
-                  </div>
-                  
-                  <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-                    Build Your Store
-                    <br />
-                    <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      In Minutes, Not Months
-                    </span>
-                  </h1>
-                  
-                  <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
-                    A modern e-commerce backend built with Django. Complete with products, 
-                    categories, authentication, and real-time caching. Ready to power your next big idea.
-                  </p>
-                  
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <a href={`${API_BASE_URL}/swagger/`} target="_blank" rel="noopener noreferrer"
-                       className="px-8 py-4 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 transition-all transform hover:scale-105 font-semibold flex items-center space-x-2">
-                      <span>🚀 Explore API</span>
-                    </a>
-                    <a href="#products"
-                       className="px-8 py-4 rounded-lg bg-white/10 hover:bg-white/20 transition-colors font-semibold flex items-center space-x-2">
-                      <span>📦 See Live Demo</span>
-                    </a>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                    <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                      <div className="text-4xl font-bold text-cyan-400 mb-2">{stats.totalProducts}+</div>
-                      <div className="text-gray-300">Products Available</div>
-                    </div>
-                    <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                      <div className="text-4xl font-bold text-purple-400 mb-2">{stats.categories}+</div>
-                      <div className="text-gray-300">Categories</div>
-                    </div>
-                    <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                      <div className="text-4xl font-bold text-pink-400 mb-2">{stats.brands}+</div>
-                      <div className="text-gray-300">Brands</div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Live Products Section */}
-              <section id="products" className="relative container mx-auto px-6 py-24">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                    Live Product Feed
-                  </h2>
-                  <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                    Real products fetched directly from the API. This is your backend in action, 
-                    serving data in real-time with Redis caching for blazing-fast performance.
-                  </p>
-                </div>
-
-                {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(8)].map((_, i) => (
-                      <div key={i} className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 animate-pulse">
-                        <div className="aspect-square bg-white/10 rounded-lg mb-4"></div>
-                        <div className="h-4 bg-white/10 rounded mb-2"></div>
-                        <div className="h-4 bg-white/10 rounded w-2/3"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : error ? (
-                  <div className="text-center p-12 rounded-xl bg-red-500/10 border border-red-500/30">
-                    <p className="text-red-300 mb-4">Unable to connect to API: {error}</p>
-                    <p className="text-gray-400 text-sm">Make sure your Django server is running</p>
-                  </div>
-                ) : products.length === 0 ? (
-                  <div className="text-center p-12 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                    <p className="text-gray-300 mb-2">No products found</p>
-                    <p className="text-gray-400 text-sm">Add some products to your database to see them here</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {products.map((product) => (
-                      <div key={product.id} 
-                           className="card-hover rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                        <div className="relative aspect-square bg-gradient-to-br from-purple-500/20 to-cyan-500/20 overflow-hidden">
-                          {product.primary_image ? (
-                            <img 
-                              src={product.primary_image} 
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <span className="text-6xl">📦</span>
-                            </div>
-                          )}
-                          {product.discount_percentage > 0 && (
-                            <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-pink-500 text-white text-sm font-bold">
-                              -{product.discount_percentage}%
-                            </div>
-                          )}
-                          {!product.is_in_stock && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <span className="text-white font-semibold">Out of Stock</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="p-6">
-                          {product.brand && (
-                            <p className="text-sm text-cyan-400 mb-1">{product.brand.name}</p>
-                          )}
-                          <h3 className="text-lg font-semibold mb-2 line-clamp-2 group-hover:text-cyan-400 transition-colors">
-                            {product.name}
-                          </h3>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-baseline space-x-2">
-                              <span className="text-2xl font-bold text-cyan-400">
-                                {product.currency} {parseFloat(product.price).toFixed(2)}
-                              </span>
-                              {product.compare_at_price && (
-                                <span className="text-sm text-gray-400 line-through">
-                                  {product.currency} {parseFloat(product.compare_at_price).toFixed(2)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Features Section */}
-              <section className="relative container mx-auto px-6 py-24">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                    Powerful Features Out of the Box
-                  </h2>
-                  <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                    Everything you need to launch a production-ready e-commerce platform
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  <FeatureCard 
-                    icon={<span className="text-4xl">🔐</span>}
-                    title="Secure Authentication"
-                    description="Modern authentication with JWT tokens, OTP verification, and Google OAuth integration."
-                    color="from-cyan-500 to-blue-500"
-                  />
-                  <FeatureCard 
-                    icon={<span className="text-4xl">⚡</span>}
-                    title="Redis Caching"
-                    description="Lightning-fast response times with intelligent caching. Your API stays performant under load."
-                    color="from-purple-500 to-pink-500"
-                  />
-                  <FeatureCard 
-                    icon={<span className="text-4xl">💾</span>}
-                    title="PostgreSQL Backend"
-                    description="Rock-solid data storage with ACID compliance. Your data is safe and queryable at scale."
-                    color="from-green-500 to-teal-500"
-                  />
-                  <FeatureCard 
-                    icon={<span className="text-4xl">⏰</span>}
-                    title="Async Tasks"
-                    description="Celery-powered background processing for emails, notifications, and heavy computations."
-                    color="from-orange-500 to-red-500"
-                  />
-                  <FeatureCard 
-                    icon={<span className="text-4xl">📊</span>}
-                    title="Advanced Filtering"
-                    description="Powerful query capabilities with filtering, search, and sorting across all resources."
-                    color="from-indigo-500 to-purple-500"
-                  />
-                  <FeatureCard 
-                    icon={<span className="text-4xl">⭐</span>}
-                    title="Review System"
-                    description="Built-in product reviews with ratings, verification status, and moderation tools."
-                    color="from-yellow-500 to-orange-500"
-                  />
-                </div>
-              </section>
-
-              {/* Tech Stack Section */}
-              <section className="relative container mx-auto px-6 py-24">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                    Built With Modern Tools
-                  </h2>
-                  <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                    Production-tested technologies that scale
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-                  <TechBadge name="Django 5.2" color="bg-green-500/20 border-green-500/30 text-green-300" />
-                  <TechBadge name="PostgreSQL" color="bg-blue-500/20 border-blue-500/30 text-blue-300" />
-                  <TechBadge name="Redis" color="bg-red-500/20 border-red-500/30 text-red-300" />
-                  <TechBadge name="Celery" color="bg-green-500/20 border-green-500/30 text-green-300" />
-                  <TechBadge name="JWT Auth" color="bg-purple-500/20 border-purple-500/30 text-purple-300" />
-                  <TechBadge name="REST API" color="bg-cyan-500/20 border-cyan-500/30 text-cyan-300" />
-                  <TechBadge name="Docker" color="bg-blue-500/20 border-blue-500/30 text-blue-300" />
-                  <TechBadge name="Swagger" color="bg-orange-500/20 border-orange-500/30 text-orange-300" />
-                </div>
-              </section>
-
-              {/* CTA Section */}
-              <section className="relative container mx-auto px-6 py-24">
-                <div className="relative rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 p-12 text-center overflow-hidden">
-                  <div className="relative z-10">
-                    <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                      Ready to Build Something Amazing?
-                    </h2>
-                    <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-                      Dive into the documentation and start building your e-commerce platform today
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <a href={`${API_BASE_URL}/swagger/`} target="_blank" rel="noopener noreferrer"
-                         className="px-8 py-4 rounded-lg bg-white text-purple-600 hover:bg-gray-100 transition-colors font-semibold flex items-center justify-center space-x-2">
-                        <span>📚 View API Docs</span>
-                      </a>
-                      <a href={`${API_BASE_URL}/admin/`} target="_blank" rel="noopener noreferrer"
-                         className="px-8 py-4 rounded-lg bg-black/20 hover:bg-black/30 transition-colors font-semibold flex items-center justify-center space-x-2">
-                        <span>🔐 Admin Panel</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Footer */}
-              <footer className="container mx-auto px-6 py-12 border-t border-white/10">
-                <div className="flex flex-col md:flex-row justify-between items-center">
-                  <div className="flex items-center space-x-2 mb-4 md:mb-0">
-                    <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                      Nexus API
-                    </span>
-                  </div>
-                  <div className="text-gray-400 text-sm">
-                    Built with Django, PostgreSQL, Redis & ❤️
-                  </div>
-                </div>
-              </footer>
-            </div>
-          );
-        };
-
-        ReactDOM.render(<NexusAPILanding />, document.getElementById('root'));
+            fetchStats();
+        });
     </script>
 </body>
 </html>
