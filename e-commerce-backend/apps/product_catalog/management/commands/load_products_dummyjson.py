@@ -179,38 +179,57 @@ class Command(BaseCommand):
         # Store created categories for reference
         created_categories = {}
 
-        # Step 1: Create root category
-        root = Category.objects.create(
-            name="All Categories",
+        # Step 1: Get or create root category
+        root, created = Category.objects.get_or_create(
             slug="all-categories",
-            description="Browse all product categories",
-            is_active=True,
+            defaults={
+                "name": "All Categories",
+                "description": "Browse all product categories",
+                "is_active": True,
+            },
         )
         created_categories["root"] = root
-        self.stdout.write("  ✓ Created root: All Categories")
+        if created:
+            self.stdout.write("  ✓ Created root: All Categories")
+        else:
+            self.stdout.write("  ℹ Using existing root: All Categories")
 
         # Step 2: Create parent categories (level 1 and level 2)
         # First pass: Create level 1 parents (those with parent=None)
         for slug, (name, parent_slug, desc) in parent_categories.items():
             if parent_slug is None:
-                parent_cat = Category.objects.create(
-                    name=name, slug=slug, description=desc, parent=root, is_active=True
+                parent_cat, created = Category.objects.get_or_create(
+                    slug=slug,
+                    defaults={
+                        "name": name,
+                        "description": desc,
+                        "parent": root,
+                        "is_active": True,
+                    },
                 )
                 created_categories[slug] = parent_cat
-                self.stdout.write(f"  ✓ Created parent: {name}")
+                if created:
+                    self.stdout.write(f"  ✓ Created parent: {name}")
+                else:
+                    self.stdout.write(f"  ℹ Using existing parent: {name}")
 
         # Second pass: Create level 2 parents (those with parent_slug set)
         for slug, (name, parent_slug, desc) in parent_categories.items():
             if parent_slug is not None and slug not in created_categories:
-                parent_cat = Category.objects.create(
-                    name=name,
+                parent_cat, created = Category.objects.get_or_create(
                     slug=slug,
-                    description=desc,
-                    parent=created_categories.get(parent_slug, root),
-                    is_active=True,
+                    defaults={
+                        "name": name,
+                        "description": desc,
+                        "parent": created_categories.get(parent_slug, root),
+                        "is_active": True,
+                    },
                 )
                 created_categories[slug] = parent_cat
-                self.stdout.write(f"  ✓ Created sub-parent: {name}")
+                if created:
+                    self.stdout.write(f"  ✓ Created sub-parent: {name}")
+                else:
+                    self.stdout.write(f"  ℹ Using existing sub-parent: {name}")
 
         # Step 3: Create leaf categories (actual product categories)
         for cat_name in sorted(categories):
@@ -223,19 +242,24 @@ class Command(BaseCommand):
                 description = f"Browse our {display_name.lower()} collection"
                 parent = root
 
-            category = Category.objects.create(
-                name=display_name,
+            category, created = Category.objects.get_or_create(
                 slug=cat_name,
-                description=description,
-                parent=parent,
-                is_active=True,
+                defaults={
+                    "name": display_name,
+                    "description": description,
+                    "parent": parent,
+                    "is_active": True,
+                },
             )
             category_mapping[cat_name] = category
             created_categories[cat_name] = category
 
             # Show hierarchy in output
-            hierarchy_path = category.get_full_path()
-            self.stdout.write(f"  ✓ Created: {hierarchy_path}")
+            if created:
+                hierarchy_path = category.get_full_path()
+                self.stdout.write(f"  ✓ Created: {hierarchy_path}")
+            else:
+                self.stdout.write(f"  ℹ Using existing: {category.name}")
 
         return category_mapping
 
